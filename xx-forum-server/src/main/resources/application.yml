@@ -1,0 +1,71 @@
+server:
+  port: 8080
+
+
+
+spring:
+  profiles:
+    active: dev
+  main:
+    allow-circular-references: true
+  jackson:
+    date-format: yyyy-MM-dd HH:mm:ss
+    time-zone: GMT+8
+  type: com.alibaba.druid.pool.DruidDataSource
+  datasource:
+      driver-class-name: ${cyj.datasource.driver-class-name}
+      url: jdbc:mysql://${cyj.datasource.host}:${cyj.datasource.port}/${cyj.datasource.database}?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true
+      username: ${cyj.datasource.username}
+      password: ${cyj.datasource.password}
+      type: com.alibaba.druid.pool.DruidDataSource
+      druid:
+        initial-size: 5
+        min-idle: 5
+        max-active: 20
+        max-wait: 60000
+  data:
+    redis:
+      host: localhost
+      port: 6379
+#      password:
+      database: 0
+      lettuce:
+        pool:
+          min-idle: 0
+          max-idle: 8
+          max-wait: -1ms
+          max-active: 16
+
+
+
+
+
+
+mybatis:
+  #mapper配置文件
+  mapper-locations: classpath:mapper/*.xml
+  type-aliases-package: com.cyj.xx.entity
+  configuration:
+    #开启驼峰命名
+    map-underscore-to-camel-case: true
+    log-impl: org.apache.ibatis.logging.stdout.StdOutImpl
+    # SQL 格式化配置
+    local-cache-scope: session
+    call-setters-on-nulls: true
+    # 启用 SQL 美化
+    sql-pretty: true
+
+logging:
+  level:
+    com.cyj.xx.mapper: trace  # 改为 TRACE 级别
+    java.sql: debug
+
+
+cyj:
+  jwt:
+    secret: "jycyj"
+    exptime: 7200000
+    token: "token"
+
+
+
