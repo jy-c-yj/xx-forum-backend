@@ -8,12 +8,15 @@ import com.cyj.xx.mapper.SectionsMapper;
 import com.cyj.xx.result.Result;
 import com.cyj.xx.service.SectionsService;
 import com.cyj.xx.service.adminService;
+import com.cyj.xx.utils.RedisUtil;
 import com.github.pagehelper.PageHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Map;
+import java.util.concurrent.TimeUnit;
 
 
 @Service
@@ -22,6 +25,9 @@ public class SectionsServiceImpl implements SectionsService {
 
     @Autowired
     private SectionsMapper sectionsMapper;
+
+    @Autowired
+    private RedisUtil redisUtil;
 
 
     /**
@@ -33,9 +39,20 @@ public class SectionsServiceImpl implements SectionsService {
     @Override
     public Result<List<HotSectionsDVO>> HotSection(Integer limit) {
         try{
+
+            String key = "Sec:hot";
+            if(redisUtil.exists(key)){
+
+                List<HotSectionsDVO> ll =  redisUtil.GetAll(key);
+                log.info("获取HotSections缓存 ===> {}",ll);
+                return Result.success(ll);
+            }
+
+
             PageHelper.startPage(1, 10);
             List<HotSectionsDVO> hotSec = sectionsMapper.PageHotSec();
-
+            log.info("未查询到缓存，执行缓存操作");
+            redisUtil.pushAll(key, hotSec,20,TimeUnit.HOURS);
 
             return Result.success(hotSec);
 
@@ -58,8 +75,17 @@ public class SectionsServiceImpl implements SectionsService {
         }
 
         try{
+            String key = "Sec:my:"+id;
+            if(redisUtil.exists(key)){
+                log.info("获取缓存数据");
+                List<MySectionDVO> ll = redisUtil.GetAll(key);
+                return Result.success(ll);
+
+            }
 
             List<MySectionDVO> mySec =  sectionsMapper.getMySection(id);
+            log.info("未查询到缓存，执行缓存操作");
+            redisUtil.pushAll(key,mySec,20, TimeUnit.HOURS);
 
             return Result.success(mySec);
 

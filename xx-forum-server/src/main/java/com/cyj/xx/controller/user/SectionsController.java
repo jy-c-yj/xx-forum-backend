@@ -33,7 +33,6 @@ public class SectionsController {
     public Result<List<MySectionDVO>> mySection(Long id) {
 
 
-
         return sectionsService.mySection(id);
     }
 

@@ -18,6 +18,7 @@ import com.cyj.xx.service.postsService;
 import com.github.pagehelper.Page;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import com.github.pagehelper.PageHelper;
 import org.springframework.transaction.annotation.Transactional;
@@ -61,6 +62,7 @@ public class PostsServiceImpl implements postsService {
 
 
     @Override
+
     public PageResult Secpage(SecPostsPageDTO secPostsPageDTO) {
         try{
             PageHelper.startPage(secPostsPageDTO.getPage(),secPostsPageDTO.getPageSize());

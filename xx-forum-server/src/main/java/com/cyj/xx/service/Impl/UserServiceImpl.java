@@ -6,6 +6,7 @@ import com.cyj.xx.dto.UserChangePwd;
 import com.cyj.xx.dto.UserEnrollDTO;
 import com.cyj.xx.dto.UserLoginDTO;
 import com.cyj.xx.dto.UserReviseDTO;
+import com.cyj.xx.dvo.MeanUser;
 import com.cyj.xx.dvo.UserLoginDVO;
 import com.cyj.xx.dvo.UserPersonalDVO;
 import com.cyj.xx.entity.User;
@@ -16,16 +17,20 @@ import com.cyj.xx.result.Result;
 import com.cyj.xx.service.userService;
 import com.cyj.xx.utils.AliOssUtil;
 import com.cyj.xx.utils.JwtUtil;
+import com.cyj.xx.utils.RedisUtil;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.RedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.util.DigestUtils;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
 import java.util.HashMap;
+import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
@@ -38,16 +43,21 @@ public class UserServiceImpl implements userService {
     @Autowired
     JwtProperties jwtProperties;
 
+    @Autowired
+    RedisUtil redisUtil;
+
 
 
     /**
-     * 员工登陆
+     * 用户登陆
      * @param userLoginDTO
      */
     @Override
     public UserLoginDVO userLogin(UserLoginDTO userLoginDTO) {
         String username = userLoginDTO.getUsername();
         String password = userLoginDTO.getPassword();
+
+//        redisTemplate.opsForHash().get()
 
         User user = userMapper.getUserByUserName(username);
 
@@ -70,15 +80,39 @@ public class UserServiceImpl implements userService {
 
 
         UserLoginDVO userdVO = UserLoginDVO.builder()
+                .id(user.getId())
                 .file(user.getImage())
-                .createTime(user.getCreatedTime())
+                .status(user.getStatus())
                 .email(user.getEmail())
                 .username(user.getUsername())
-                .password(user.getPassword())
+                .phone(user.getPhone())
+                .desc(user.getDesc())
+                .gender(user.getGender())
                 .token(jwt)
                 .likeCount(user.getLikeCount())
                 .postCount(user.getPostCount())
                 .build();
+        String key = "user:"+user.getId();
+
+
+
+        if (!redisUtil.exists(key)) {
+            log.info("向redis缓存用户 ===> {} ", user.getId());
+            Map<String, Object> userMap = new HashMap<>();
+            userMap.put("id", userdVO.getId());
+            userMap.put("file", userdVO.getFile());
+            userMap.put("status", userdVO.getStatus());
+            userMap.put("email", userdVO.getEmail());
+            userMap.put("username", userdVO.getUsername());
+            userMap.put("phone", userdVO.getPhone());
+            userMap.put("desc", userdVO.getDesc());
+            userMap.put("gender", userdVO.getGender());
+            userMap.put("likeCount", userdVO.getLikeCount());
+            userMap.put("postCount", userdVO.getPostCount());
+            redisUtil.hsave(key, userMap,1 ,TimeUnit.DAYS);
+        }
+
+
 
         return userdVO;
 
@@ -150,18 +184,63 @@ public class UserServiceImpl implements userService {
     }
 
     /**
+     * 菜单处信息显示
+     * @param id
+     */
+    @Override
+    public MeanUser meanUser(Long id) {
+        String key = "user:"+id;
+        MeanUser meanUser = new MeanUser();
+        if (redisUtil.exists(key)) {
+            Map<String,Object> map = redisUtil.hgetAll(key);
+            meanUser.setId(Long.parseLong(map.get("id").toString()));
+            meanUser.setUsername(map.get("username").toString());
+            meanUser.setImage(map.get("file").toString());
+            return meanUser;
+        }
+
+        User  u = userMapper.getUserById(id);
+        meanUser.setId(u.getId());
+        meanUser.setUsername(u.getUsername());
+        meanUser.setImage(u.getImage());
+        return meanUser;
+
+    }
+
+    /**
      * 个人信息显示
      * @param username
      * @return
      */
     @Override
     public Result userPersonal(String username) {
+        Map<String,Object> map = new HashMap<>();
+        User user = new User();
 
         if(username == null || "".equals(username)) {
             return Result.error("未登录");
         }
+        Long id = BaseContext.getCurrentId();
+        if(redisUtil.exists("user:"+id)){
 
-        User user =  userMapper.getUserByUserName(username);
+            map = redisUtil.hgetAll("user:"+id);
+            log.info("查询缓存 ==== 》{}",id);
+            UserPersonalDVO userpersonalDVO = UserPersonalDVO.builder()
+                    .id(id)
+                    .username(map.get("username").toString())
+                    .image(map.get("file").toString())
+                    .phone(map.get("phone").toString())
+                    .email(map.get("email").toString())
+                    .likeCount((Integer) map.get("likeCount"))
+                    .postCount((String) map.get("postCount"))
+                    .desc(map.get("desc").toString())
+                    .gender(map.get("gender").toString())
+                    .build();
+
+            return Result.success(userpersonalDVO);
+        }
+        log.info("查询数据库 ==== 》{}",id);
+        user =  userMapper.getUserByUserName(username);
         UserPersonalDVO userpersonalDVO = UserPersonalDVO.builder()
                 .id(user.getId())
                 .createtime(user.getCreatedTime())
@@ -174,6 +253,7 @@ public class UserServiceImpl implements userService {
                 .desc(user.getDesc())
                 .gender(user.getGender())
                 .build();
+
 
 
         return Result.success(userpersonalDVO);

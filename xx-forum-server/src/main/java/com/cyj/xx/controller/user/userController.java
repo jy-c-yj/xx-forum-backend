@@ -1,13 +1,18 @@
 package com.cyj.xx.controller.user;
 
 
+import com.cyj.xx.context.BaseContext;
 import com.cyj.xx.dto.UserChangePwd;
 import com.cyj.xx.dto.UserEnrollDTO;
 import com.cyj.xx.dto.UserLoginDTO;
 import com.cyj.xx.dto.UserReviseDTO;
+import com.cyj.xx.dvo.MeanUser;
 import com.cyj.xx.dvo.UserLoginDVO;
 import com.cyj.xx.result.Result;
 import com.cyj.xx.service.Impl.UserServiceImpl;
+import com.cyj.xx.utils.RedisUtil;
+import lombok.extern.slf4j.Slf4j;
+import org.apache.ibatis.annotations.Delete;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -15,10 +20,13 @@ import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/user")
+@Slf4j
 public class userController {
 
     @Autowired
     UserServiceImpl userService;
+    @Autowired
+    RedisUtil redisUtil;
 
 
     /**
@@ -35,6 +43,37 @@ public class userController {
 
 
         return Result.success(userloginDVO);
+    }
+
+    /**
+     * 退出登陆操作
+     * @return
+     */
+
+    @DeleteMapping("/quit")
+    public  Result quit(){
+
+        Long id = BaseContext.getCurrentId();
+
+        String key = "user:"+id;
+        log.info("用户{}退出登陆",key);
+        boolean bol =  redisUtil.delete(key);
+        if(!bol){
+            return Result.error("操作出错，请检查登陆");
+        }
+        return Result.success();
+
+    }
+
+    /**
+     * 菜单处信息显示
+     * @return
+     */
+    @GetMapping("/meanUser")
+    public Result meanUser(){
+        Long id = BaseContext.getCurrentId();
+        MeanUser mu =userService.meanUser(id);
+        return Result.success(mu);
     }
 
     /**

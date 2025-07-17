@@ -11,14 +11,16 @@ import java.time.LocalDateTime;
 @Data
 @Builder
 public class UserLoginDVO implements Serializable {
+    private Long id;
     private String username;
-    private String password;
     private String email = null;
     private String file = null;
-
+    private String phone;
     @JsonFormat(pattern = "yyyy-MM-dd hh:mm:ss")
     private LocalDateTime createTime;
-    
+    private Integer status;
+    private String desc;
+    private String gender;
     private String token;
     private String postCount;
     private Integer likeCount;
