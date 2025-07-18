@@ -53,7 +53,7 @@ public class ReplyDVO {
      * 创建时间
      * 数据库自动设置默认值，不可更新
      */
-    @JsonFormat(pattern = "yyyy-MM-dd hh:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createdTime;
 
 

@@ -35,13 +35,13 @@ public class testt {
         u2.name = "jy2c";
         u2.age = 128;
         u2.gendle = 20;
-        List list = new ArrayList();
-        list.add(u1);
-        list.add(u2);
-        redisTemplate.opsForList().leftPushAll("list", list);
-
-        List<uu> ll = (List)redisTemplate.opsForList().range("list", 0, -1);
-        System.out.println(ll);
+//        redisTemplate.opsForValue().set("uu:1",u1);
+//        redisTemplate.opsForValue().set("uu:2",u2);
+        List<uu> ll = new ArrayList<>();
+        ll.add((uu)redisTemplate.opsForValue().get("uu:1"));
+        ll.add((uu)redisTemplate.opsForValue().get("uu:2"));
+        uu u = ll.get(0);
+        System.out.println(u.gendle);
 
 
     }

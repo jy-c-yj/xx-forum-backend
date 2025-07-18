@@ -16,7 +16,7 @@ public class UserLoginDVO implements Serializable {
     private String email = null;
     private String file = null;
     private String phone;
-    @JsonFormat(pattern = "yyyy-MM-dd hh:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createTime;
     private Integer status;
     private String desc;

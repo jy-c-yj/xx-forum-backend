@@ -3,8 +3,8 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="com.cyj.xx.mapper.UserMapper">
     <insert id="userEnroll" useGeneratedKeys="true" keyProperty="id">
-            INSERT INTO users(username, password, email, image, created_time, updated_time, last_login_time, status)
-                VALUE(#{username}, md5(#{password}), #{email}, #{image}, #{createdTime}, #{updatedTime}, #{lastLoginTime}, #{status})
+            INSERT INTO users(username, password, email, image, created_time, updated_time, last_login_time, status,`desc`,phone)
+                VALUE(#{username}, md5(#{password}), #{email}, #{image}, #{createdTime}, #{updatedTime}, #{lastLoginTime}, #{status},#{desc},#{phone})
     </insert>
 
     <update id="updateUser" parameterType="com.cyj.xx.entity.User">

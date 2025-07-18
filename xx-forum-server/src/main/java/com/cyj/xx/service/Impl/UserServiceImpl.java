@@ -167,6 +167,8 @@ public class UserServiceImpl implements userService {
                     .email(userenrollDTO.getEmail())
                     .image(image)
                     .status(1)
+                    .phone("未绑定")
+                    .desc("这个人很懒，什么都没写")
                     .build();
         }
         else {

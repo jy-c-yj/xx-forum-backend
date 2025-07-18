@@ -23,6 +23,9 @@ public interface RepliesMapper {
 
     ReplyDVO getReplyById(Long id);
 
+    @Select("SELECT * FROM replies where id = #{id}")
+    Replies getRepliesById(Long id);
+
     void updataReplies(Replies replies);
 
 

@@ -13,7 +13,7 @@ public class UserPersonalDVO {
     private Long id;
     private String username;
     private String email;
-    @JsonFormat(pattern = "yyyy-MM-dd hh:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createtime;
     private Integer likeCount;
     private String postCount;

@@ -7,6 +7,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 @Component
@@ -22,6 +23,30 @@ public class RedisUtil<T> {
     public boolean delete(String key) {
         return redisTemplate.delete(key);
     }
+    public boolean delete(String[] key) {
+        for (String s : key) {
+            redisTemplate.delete(s);
+        }
+        return true;
+    }
+
+    /**
+     * 批量获取key
+     * @param pattern
+     * @return
+     */
+    public Set<String> keys(String pattern) {
+        return redisTemplate.keys(pattern);
+    }
+
+
+    public void set(String key, Object value) {
+        redisTemplate.opsForValue().set(key, value);
+    }
+    public Object get(String key) {
+        return  redisTemplate.opsForValue().get(key);
+    }
+
 
 
     /**
@@ -207,8 +232,8 @@ public class RedisUtil<T> {
      * @return
      */
 
-    public List<T> GetAll(String key) {
-        return (List<T>) redisTemplate.opsForList().range(key, 0, -1);
+    public List GetAll(String key) {
+        return (List) redisTemplate.opsForList().range(key, 0, -1);
     }
 
 }

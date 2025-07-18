@@ -16,6 +16,7 @@ import com.cyj.xx.mapper.UserReplyLikesMapper;
 import com.cyj.xx.result.PageResult;
 import com.cyj.xx.result.Result;
 import com.cyj.xx.service.repliesService;
+import com.cyj.xx.utils.RedisUtil;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import lombok.extern.slf4j.Slf4j;
@@ -27,6 +28,8 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
+import java.util.concurrent.TimeUnit;
 
 
 @Slf4j
@@ -41,12 +44,27 @@ public class RepliesServiceImpl implements repliesService {
     UserReplyLikesMapper userReplyLikesMapper;
     @Autowired
     PostsMapper postsMapper;
+    @Autowired
+    private RedisUtil redisUtil;
 
     @Override
     public PageResult getReply(RepliesPageDTO repliesPageDTO) {
         Long id = Long.parseLong("-1");
+        String key1 = "replies:PostId:"+repliesPageDTO.getPostid()+":page:"+repliesPageDTO.getPage();
+        String key2 = "replies:PostId:"+repliesPageDTO.getPostid()+":replyId:";
         try{
+            //如果缓存存在
+            if(redisUtil.exists(key1)){
+                log.info("查询到分页缓存");
+                List<ReplyDVO> replies = redisUtil.GetAll(key1);
+                PageResult pageResult = PageResult.builder()
+                        .total(replies.size())
+                        .records(replies)
+                        .build();
+                return pageResult;
 
+            }
+            //如果缓存不存在
             log.info("开始查询replies,user表,当前用户user ===》{}",BaseContext.getCurrentId());
 
             if(BaseContext.getCurrentId() == null){
@@ -72,6 +90,22 @@ public class RepliesServiceImpl implements repliesService {
                     .records(replies)
                     .build();
 
+            //缓存分页数据
+            redisUtil.pushAll(key1, replies,10, TimeUnit.MINUTES);
+            //缓存单条数据
+            for (ReplyDVO replyDVO : replies) {
+                String k = key2+replyDVO.getId();
+                if(!redisUtil.exists(k)){
+                    redisUtil.set(k,replyDVO);
+                    if(replyDVO.getChildren().size()>0){
+                        for(ReplyDVO child : replyDVO.getChildren()){
+                            redisUtil.set(key2+child.getId(),child);
+                        }
+                    }
+                }
+
+            }
+
             return pageResult;
         }catch (Exception e){
             log.info("数据查询异常");
@@ -94,6 +128,7 @@ public class RepliesServiceImpl implements repliesService {
     @Override
     @Transactional
     public Result addNewReply(NewReplyDTO newReplyDTO) {
+        String key = "replies:postId:"+newReplyDTO.getPostId()+":replyId:";
 
         if(newReplyDTO.getContent() == null || newReplyDTO.getContent().equals("")){
             log.info("newReply: {}",newReplyDTO);
@@ -115,10 +150,37 @@ public class RepliesServiceImpl implements repliesService {
             //新增回复
             repliesMapper.addReply(replies);
             log.info("新增reply成功");
+
+            //更新post回复数
             Posts post =  postsMapper.getPostById(newReplyDTO.getPostId());
             post.setReplyCount(post.getReplyCount()+1);
             postsMapper.UpdataPost(post);
+            //更新post缓存
+            //清空分页缓存
+            String k = "Posts:Sec:"+ post.getSectionId() +":page:*";
+            Set<String> kk = redisUtil.keys(k);
+            redisUtil.delete(kk.toArray(new String[0]));
+            //更新单条缓存
+            String k1 = "Posts:Sec:"+ post.getSectionId() +":postId:"+post.getId();
+            redisUtil.set(k1,post);
+
             ReplyDVO replyDVO =  repliesMapper.getReplyById(replies.getId());
+
+            //清空分页缓存
+//            String pattern = "replies:" + newReplyDTO.getPostId() + ":page:*";
+//            Set<String> keys = redisUtil.keys(pattern);
+//            redisUtil.delete(keys.toArray(new String[0]));
+            delRepliesPage("replies:PostId:" + newReplyDTO.getPostId() + ":page:*");
+
+            // 2. 更新单条缓存
+//            String itemKey = key + replies.getId();
+//            if (!redisUtil.exists(itemKey)) {
+//                redisUtil.set(itemKey, replies);
+//            }
+            log.info("更新单条缓存");
+            BeanUtils.copyProperties(replyDVO,replies);
+            updateRedis("replies:PostId:"+newReplyDTO.getPostId()+":replyId:"+replies.getId(),replies);
+
             return Result.success(replyDVO);
         }catch (Exception e ){
             e.printStackTrace();
@@ -136,7 +198,10 @@ public class RepliesServiceImpl implements repliesService {
     @Transactional
     public Result UpdataReplyLike(UpdataReplyLikeDTO updataReplyLikeDTO) {
         log.info("正在运行UpdataReplyLike，形参updataReplyLikeDTO===》{}",updataReplyLikeDTO);
-        Replies replies = new Replies();
+
+
+
+        Replies replies = repliesMapper.getRepliesById(updataReplyLikeDTO.getId());
         replies.setId(updataReplyLikeDTO.getId());
         replies.setLikeCount(updataReplyLikeDTO.getLikeCount());
         UpdataReplyLikedDVO updataReplyLikedDVO = new UpdataReplyLikedDVO();
@@ -168,6 +233,15 @@ public class RepliesServiceImpl implements repliesService {
             updataReplyLikedDVO.setReplyId(updataReplyLikeDTO.getId());
             updataReplyLikedDVO.setLikeCount(likeCount);
 
+
+            //清空replies分页缓存
+            delRepliesPage("replies:PostId:" + replies.getPostId() + ":page:*");
+            //更新reply缓存
+            log.info("更新单个reply缓存");
+            updateRedis("replies:PostId:"+replies.getPostId() +":replyId:"+ replies.getId(),replies);
+            //更新user缓存
+            redisUtil.Hset("user:"+user.getId(),"likeCount",user.getLikeCount());
+
             return Result.success(updataReplyLikedDVO);
         }catch (Exception e){
             e.printStackTrace();
@@ -176,5 +250,14 @@ public class RepliesServiceImpl implements repliesService {
 
 
         return Result.error("操作失败");
+    }
+    public  void updateRedis(String itemKey,Replies replies){
+
+            redisUtil.set(itemKey, replies);
+
+    }
+    public void delRepliesPage(String pattern){
+        Set<String> keys = redisUtil.keys(pattern);
+        redisUtil.delete(keys.toArray(new String[0]));
     }
 }

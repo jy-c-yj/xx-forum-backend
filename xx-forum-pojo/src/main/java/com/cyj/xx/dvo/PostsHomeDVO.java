@@ -22,7 +22,8 @@ public class PostsHomeDVO {
 
     private Integer viewCount;      // 查看次数
     private Integer replyCount;     // 回复数量
-    @JsonFormat(pattern = "yyyy-MM-dd hh:mm:ss")
+
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime lastReplyTime; // 最后回复时间
 
     private Integer collectCount;     // 收藏数量

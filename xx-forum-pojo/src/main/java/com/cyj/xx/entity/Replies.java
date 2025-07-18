@@ -59,7 +59,7 @@ public class Replies {
      * 更新时间
      * 数据库自动更新，应用层不管理
      */
-    @JsonFormat(pattern = "yyyy-MM-dd hh:mm:ss")
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime updatedTime;
 
     /**
