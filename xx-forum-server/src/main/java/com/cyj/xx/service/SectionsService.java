@@ -16,4 +16,10 @@ public interface SectionsService {
     Result<List<MySectionDVO>> mySection(Long id);
 
     Result<Section> sectionDetail(Long id);
+
+    Result<MySectionDVO> followSec(Long sectionId);
+
+    Result<Boolean> isFollowSec(Long sectionId);
+
+    Result<Boolean> unfollowSec(Long sectionId);
 }

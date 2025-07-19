@@ -240,7 +240,10 @@ public class RepliesServiceImpl implements repliesService {
             log.info("更新单个reply缓存");
             updateRedis("replies:PostId:"+replies.getPostId() +":replyId:"+ replies.getId(),replies);
             //更新user缓存
-            redisUtil.Hset("user:"+user.getId(),"likeCount",user.getLikeCount());
+            if(redisUtil.exists("user:"+user.getId())){
+                redisUtil.Hset("user:"+user.getId(),"likeCount",user.getLikeCount());
+            }
+
 
             return Result.success(updataReplyLikedDVO);
         }catch (Exception e){

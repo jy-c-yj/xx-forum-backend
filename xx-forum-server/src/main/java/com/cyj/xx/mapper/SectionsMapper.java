@@ -25,4 +25,7 @@ public interface SectionsMapper {
 
     @Select("SELECT * FROM sections WHERE id = #{id}")
     Section getSectionById(Long id);
+
+
+    void UpdateSection(Section section);
 }

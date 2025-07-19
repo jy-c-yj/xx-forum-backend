@@ -43,9 +43,9 @@ public class User {
 
     private String gender;
 
-    private String phone;
+    private String phone = "还未绑定号码";
 
-    private String desc;
+    private String desc ="这个人很懒，什么都没写";
 
     private String postCount;
 

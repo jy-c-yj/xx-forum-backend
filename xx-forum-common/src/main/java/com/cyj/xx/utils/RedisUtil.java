@@ -82,7 +82,7 @@ public class RedisUtil<T> {
      * 获取哈希表所有的值
      * @param key
      */
-    public  Object Hvals(String key) {
+    public  List Hvals(String key) {
        return redisTemplate.opsForHash().values(key);
     }
 

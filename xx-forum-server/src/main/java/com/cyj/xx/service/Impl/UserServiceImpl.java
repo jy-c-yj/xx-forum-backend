@@ -271,7 +271,7 @@ public class UserServiceImpl implements userService {
         String image=null;
         if(userReviseDTO == null ) {
             log.info("userReviseDTO为空null");
-            return Result.error("修改失败，为获取到用户数据");
+            return Result.error("修改失败，未获取到用户数据");
         }
 
         try{
@@ -280,7 +280,27 @@ public class UserServiceImpl implements userService {
             user.setId(BaseContext.getCurrentId());
             log.info(user.toString());
             userMapper.updateUser(user);
-            log.info("修改完成");
+            log.info("修改完成，开始修改缓存");
+            User u = userMapper.getUserById(BaseContext.getCurrentId());
+            String key = "user:"+u.getId();
+            Map<String,Object> map = new HashMap<>();
+            map.put("username",u.getUsername());
+            map.put("image",u.getImage());
+            map.put("phone",u.getPhone());
+            map.put("email",u.getEmail());
+            map.put("likeCount",u.getLikeCount());
+            map.put("postCount",u.getPostCount());
+            map.put("desc",u.getDesc());
+            map.put("gender",u.getGender());
+            map.put("id",u.getId());
+            map.put("status",u.getStatus());
+            if(redisUtil.exists(key)){
+                redisUtil.hsave(key,map);
+                log.info("缓存完成");
+            }
+
+
+
         }catch (Exception e) {
 
             return Result.error("修改失败");

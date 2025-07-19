@@ -35,13 +35,9 @@ public class testt {
         u2.name = "jy2c";
         u2.age = 128;
         u2.gendle = 20;
-//        redisTemplate.opsForValue().set("uu:1",u1);
-//        redisTemplate.opsForValue().set("uu:2",u2);
-        List<uu> ll = new ArrayList<>();
-        ll.add((uu)redisTemplate.opsForValue().get("uu:1"));
-        ll.add((uu)redisTemplate.opsForValue().get("uu:2"));
-        uu u = ll.get(0);
-        System.out.println(u.gendle);
+//        redisTemplate.opsForHash().
+//        uu u = ll.get(0);
+//        System.out.println(u.gendle);
 
 
     }

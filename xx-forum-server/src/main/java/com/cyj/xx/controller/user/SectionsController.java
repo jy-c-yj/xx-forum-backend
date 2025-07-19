@@ -7,11 +7,9 @@ import com.cyj.xx.dvo.MySectionDVO;
 import com.cyj.xx.entity.Section;
 import com.cyj.xx.result.Result;
 import com.cyj.xx.service.SectionsService;
+import org.apache.ibatis.annotations.Delete;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -40,6 +38,42 @@ public class SectionsController {
     public Result<Section> sectionDetail(Long id) {
 
         return sectionsService.sectionDetail(id);
+    }
+
+    /**
+     * 查询是否关注板块
+     * @param sectionId
+     * @return
+     */
+    @GetMapping("/isFollowSec")
+    public Result<Boolean> isFollowSec(Long sectionId) {
+
+        return sectionsService.isFollowSec(sectionId);
+    }
+
+
+    /**
+     * 关注板块
+     * @param SectionId
+     * @return
+     */
+    @PostMapping("/followSec/{SectionId}")
+    public Result<MySectionDVO> followSec(@PathVariable Long SectionId) {
+
+
+
+        return sectionsService.followSec(SectionId);
+    }
+
+    /**
+     * 取消关注
+     * @param sectionId
+     * @return
+     */
+    @DeleteMapping("/unfollowSec")
+    public Result<Boolean> unfollowSec(Long sectionId) {
+
+        return sectionsService.unfollowSec(sectionId);
     }
 
 

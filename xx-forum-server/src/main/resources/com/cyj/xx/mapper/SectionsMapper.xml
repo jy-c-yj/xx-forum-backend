@@ -13,7 +13,34 @@
 <!--    <select id="getMySection" resultType="com.cyj.xx.dvo.MySectionDVO">-->
 <!--        -->
 <!--    </select>-->
-
+    <update id="UpdateSection" parameterType="com.cyj.xx.entity.Section">
+        UPDATE sections
+        <set>
+            <if test="name != null and name != ''">
+                name = #{name},
+            </if>
+            <if test="description != null">
+                description = #{description},
+            </if>
+            <if test="backgroundImage != null">
+                background_image = #{backgroundImage},
+            </if>
+            <if test="followersCount != null">
+                followers_count = #{followersCount},
+            </if>
+            <if test="adminId != null">
+                admin_id = #{adminId},
+            </if>
+            <if test="postCount != null">
+                post_count = #{postCount},
+            </if>
+            <if test="image != null">
+                image = #{image},
+            </if>
+            updated_time = CURRENT_TIMESTAMP
+        </set>
+        WHERE id = #{id}
+    </update>
 
 
 
