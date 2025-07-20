@@ -32,5 +32,4 @@ public class PostDetailDVO {
     private Boolean isEssence;      // 是否精华帖(0=否,1=是)
     private Integer collectCount;     // 收藏数量
     private Integer likeCount;       //点赞数量
-    private boolean liked = false;           //点赞状态
 }

@@ -15,5 +15,10 @@ public interface repliesService {
 
     Result addNewReply(NewReplyDTO newReplyDTO);
 
-    Result UpdataReplyLike(UpdataReplyLikeDTO updataReplyLikeDTO);
+
+    Result<Boolean> checktoggleLike(Long replyId);
+
+    Result<Boolean> doToggleLike(Long replyId);
+
+    Result<Boolean> untoggleLike(Long replyId);
 }

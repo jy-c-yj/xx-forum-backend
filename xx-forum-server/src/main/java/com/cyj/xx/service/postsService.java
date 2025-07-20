@@ -10,9 +10,14 @@ public interface postsService {
 
     Result postdetail(Long postid);
 
-    Result addlikeCount(UpdataPostLikeDTO updataPostLikeDTO);
 
     Result addViewCount(Long id ,Integer viewCount);
 
     PageResult Secpage(SecPostsPageDTO secPostsPageDTO);
+
+    Result<Boolean> likePost(Long postId);
+
+    Result<Boolean> unlikePost(Long postId);
+
+    Result<Boolean> checkLike(Long postId);
 }

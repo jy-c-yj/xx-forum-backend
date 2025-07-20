@@ -16,7 +16,7 @@ public interface PostsMapper {
 
     public Page<PostsHomeDVO> page(PostsPageDTO postsPageDTO);
 
-    PostDetailDVO selectPost(Long postId,Long userId);
+    PostDetailDVO selectPost(Long postId);
 
     void UpdataPost(Posts posts);
 

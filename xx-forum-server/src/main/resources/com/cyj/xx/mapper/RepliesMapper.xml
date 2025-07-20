@@ -3,29 +3,22 @@
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="com.cyj.xx.mapper.RepliesMapper">
     <select id="selectReliesbyPostId" resultType="com.cyj.xx.dvo.ReplyDVO">
+        -- 分页查询父回复
         SELECT
-        r.id,
-        r.content,
-        r.user_id AS userId,
-        r.post_id AS postId,
-        r.like_count AS likeCount,
-        r.created_time AS createdTime,
-        r.parent_id AS parentId,
-        u.username,
-        u.image,
-
-        CASE
-        WHEN l.user_id IS NOT NULL THEN 1
-        ELSE 0
-        END AS liked
+            r.id,
+            r.content,
+            r.user_id AS userId,
+            r.post_id AS postId,
+            r.like_count AS likeCount,
+            r.created_time AS createdTime,
+            r.parent_id AS parentId,
+            u.username,
+            u.image
         FROM replies r
-        INNER JOIN users u ON r.user_id = u.id
-
-        LEFT JOIN user_reply_likes l ON l.reply_id = r.id
-        AND l.user_id = #{userid}
+                 INNER JOIN users u ON r.user_id = u.id
         WHERE r.post_id = #{postid}
-        AND r.status = 0
-        AND r.parent_id = 0
+          AND r.status = 0
+          AND r.parent_id = 0
         ORDER BY r.created_time DESC
     </select>
 
@@ -56,17 +49,9 @@
             r.created_time AS createdTime,
             r.parent_id AS parentId,
             u.username,
-            u.image,
-
-            CASE
-                WHEN l.user_id IS NOT NULL THEN 1
-                ELSE 0
-                END AS liked
+            u.image
         FROM replies r
                  INNER JOIN users u ON r.user_id = u.id
-
-                 LEFT JOIN user_reply_likes l ON l.reply_id = r.id
-            AND l.user_id = #{userid}
         WHERE r.parent_id = #{replyid}
           AND r.status = 0
         ORDER BY r.created_time DESC

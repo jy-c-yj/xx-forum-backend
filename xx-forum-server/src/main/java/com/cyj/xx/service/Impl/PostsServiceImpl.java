@@ -9,6 +9,8 @@ import com.cyj.xx.dvo.PostsHomeDVO;
 import com.cyj.xx.dvo.UpdataPostLikedDVO;
 import com.cyj.xx.entity.Posts;
 import com.cyj.xx.entity.User;
+import com.cyj.xx.entity.user_post_likes;
+import com.cyj.xx.entity.user_reply_likes;
 import com.cyj.xx.mapper.PostsMapper;
 import com.cyj.xx.mapper.UserMapper;
 import com.cyj.xx.mapper.UserPostLikesMapper;
@@ -110,7 +112,7 @@ public class PostsServiceImpl implements postsService {
                 redisUtil.set(key,posts);
             }
             //缓存分页结果
-            redisUtil.pushAll(key1,page.getResult(),60, TimeUnit.SECONDS);
+            redisUtil.pushAll(key1,page.getResult(),30, TimeUnit.SECONDS);
 
             return pageResult;
         }catch (Exception e){
@@ -126,21 +128,37 @@ public class PostsServiceImpl implements postsService {
      */
     @Override
     public Result postdetail(Long postid) {
-        Long id = Long.parseLong("-1");
 
-        if(BaseContext.getCurrentId() == null){
-            BaseContext.setCurrentId(id);
+        String key = "Posts:postdetail:"+postid;
+        try{
+            if(redisUtil.exists(key)){
+                PostDetailDVO postDetailDVO = (PostDetailDVO) redisUtil.get(key);
+
+                if(!redisUtil.exists("likes:post:isLikes")){
+                    log.info("将帖子点赞表加入缓存");
+                    List<user_post_likes> ll = userPostLikesMapper.getAll();
+                    for(user_post_likes like : ll){
+                        String key_ = "likes:post:"+ like.getPostId() +":user:"+ like.getUserId();
+                        redisUtil.set(key_,like);
+                    }
+                    redisUtil.set("likes:reply:isLikes","true");
+
+                }
+
+                return Result.success(postDetailDVO);
+            }
+
+
+            PostDetailDVO postDetailDVO =  postsMapper.selectPost(postid);
+
+            log.info("添加缓存");
+            redisUtil.set(key,postDetailDVO);
+
+            return Result.success(postDetailDVO);
+        }catch (Exception e){
+            return Result.error("获取帖子详情出错");
         }
 
-        PostDetailDVO postDetailDVO =  postsMapper.selectPost(postid, BaseContext.getCurrentId());
-        log.info("postDetailDVO==>>{}",postDetailDVO.toString());
-//        log.info("观看数加一");
-//        Posts posts = new Posts();
-//        posts.setId(postid);
-//        posts.setViewCount(postDetailDVO.getViewCount()+1);
-//        postsMapper.UpdataPost(posts);
-
-        return Result.success(postDetailDVO);
     }
 
 
@@ -162,11 +180,20 @@ public class PostsServiceImpl implements postsService {
         posts.setViewCount(viewCount);
         postsMapper.UpdataPost(posts);
 
-        //清空帖子分页缓存
-        delPostPage("Posts:Sec:"+posts.getId()+":page:*");
-        //更新单个帖子缓存
+
+
         Posts p = postsMapper.getPostById(posts.getId());
+        //清空帖子分页缓存
+        if(redisUtil.exists("Posts:Sec:"+p.getSectionId() +":page:*")){
+            delPostPage("Posts:Sec:"+p.getSectionId() +":page:*");
+        }
+
+        //更新单个帖子缓存
+
         updataPost("Posts:Sec:"+ p.getSectionId() +":postId:"+p.getId(),p);
+        //更新帖子详情缓存
+        PostDetailDVO postDetailDVO = postsMapper.selectPost(posts.getId());
+        redisUtil.set("Posts:postdetail:"+posts.getId(),postDetailDVO);
 
 
         return null;
@@ -175,78 +202,142 @@ public class PostsServiceImpl implements postsService {
 
     /**
      * 点赞操作
-     * @param updataPostLikeDTO
+     * @param postId
      * @return
      */
 
     @Override
     @Transactional
-    public Result addlikeCount(UpdataPostLikeDTO updataPostLikeDTO) {
-
-        if(updataPostLikeDTO.getPostId()  == null || updataPostLikeDTO.getUsername() == null) {
-            return Result.error("操作错误");
+    public Result<Boolean> likePost(Long postId) {
+        if(BaseContext.getCurrentId() == null){
+            return Result.error("请登录");
         }
-        log.info("开始执行点赞操作updataPostLikeDTO======》》》{}",updataPostLikeDTO);
-
-        try {
-            User user = userMapper.getUserByUserName(updataPostLikeDTO.getUsername());
-            Posts posts = postsMapper.getPostById(updataPostLikeDTO.getPostId());
-            Posts post = Posts.builder().id(updataPostLikeDTO.getPostId()).likeCount(updataPostLikeDTO.getLikeCount()).build();
-            UpdataPostLikedDVO updataPostLikedDVO = new UpdataPostLikedDVO();
-            if(updataPostLikeDTO.isLiked()){
-                log.info("执行取消点赞操作updataPostLikeDTO.getLikeCount()====>{}",updataPostLikeDTO.getLikeCount());
-
-                updataPostLikeDTO.setLikeCount(updataPostLikeDTO.getLikeCount()-1);
-
-                log.info("取消点赞操作执行完毕post.getLikeCount()====>{}",updataPostLikeDTO.getLikeCount());
-
-                user.setLikeCount(user.getLikeCount()-1);
-
-                userPostLikesMapper.delete(BaseContext.getCurrentId(),updataPostLikeDTO.getPostId());
-
-                log.info("取消点赞操作执行完毕user.getLikeCount()====>{}",user.getLikeCount());
-
-
-            }else {
-                log.info("执行点赞操作updataPostLikeDTO.getLikeCount()====>{}",updataPostLikeDTO.getLikeCount());
-
-                updataPostLikeDTO.setLikeCount(updataPostLikeDTO.getLikeCount()+1);
-
-                log.info("点赞操作执行完毕post.getLikeCount()====>{}",updataPostLikeDTO.getLikeCount());
-
-                user.setLikeCount(user.getLikeCount()+1);
-
-                userPostLikesMapper.insert(BaseContext.getCurrentId(),updataPostLikeDTO.getPostId());
-
-                log.info("点赞操作执行完毕user.getLikeCount()====>{}",user.getLikeCount());
-                updataPostLikedDVO.setLiked(true);
-
+        String key_ = "Posts:postdetail:"+postId;
+        Long userId = BaseContext.getCurrentId();
+        String key = "likes:post:"+postId+":user:"+userId;
+        try{
+            if(redisUtil.exists(key)){
+                return Result.error("已点赞");
             }
-
-            post.setLikeCount(updataPostLikeDTO.getLikeCount());
+            //更新帖子点赞表
+            userPostLikesMapper.insert(userId,postId);
+            //更新帖子点赞数
+            Posts posts = postsMapper.getPostById(postId);
+            posts.setLikeCount(posts.getLikeCount()+1);
+            postsMapper.UpdataPost(posts);
+            //更新帖子发帖人获赞数
+            User user = userMapper.getUserById(userId);
+            user.setLikeCount(user.getLikeCount()+1);
             userMapper.updateUser(user);
-            postsMapper.UpdataPost(post);
 
-            updataPostLikedDVO.setLikeCount(updataPostLikeDTO.getLikeCount());
-
-            log.info("updataPostLikedDVO=======>{}",updataPostLikedDVO);
-
-            //更新单一帖子缓存
+            //更新帖子详情缓存
+            PostDetailDVO postDetailDVO = postsMapper.selectPost(postId);
+            if(redisUtil.exists(key_)){
+                redisUtil.set(key_,postDetailDVO);
+            }
+            //更新板块内帖子分页缓存
+            if(redisUtil.exists("Posts:Sec:"+posts.getSectionId()+":postId:"+postId)){
+                delPostPage("Posts:Sec:"+posts.getSectionId()+":postId:"+postId);
+            }
+            //更新单个帖子缓存
             updataPost("Posts:Sec:"+ posts.getSectionId() +":postId:"+posts.getId(),posts);
-            //清空分页帖子缓存
-            delPostPage("Posts:Sec:"+posts.getSectionId()+":page:*");
-            //更新user缓存
+
+            //更新发帖人获赞数缓存
             redisUtil.Hset("user:"+user.getId(),"likeCount",user.getLikeCount());
 
+            //更新更新帖子点赞表缓存
+            user_post_likes like = userPostLikesMapper.getlike(postId,userId);
+            redisUtil.set("likes:post:"+ like.getPostId() +":user:"+ like.getUserId(),like);
 
-            return Result.success(updataPostLikedDVO);
+            return Result.success(true);
+
         }catch (Exception e){
-            e.printStackTrace();
+            throw  new RuntimeException(e.getMessage());
         }
 
+    }
 
 
-        return Result.error("操作失败");
+    /**
+     * 取消点赞
+     * @param postId
+     * @return
+     */
+    @Override
+    @Transactional
+    public Result<Boolean> unlikePost(Long postId) {
+        String key_ = "Posts:postdetail:"+postId;
+        Long userId = BaseContext.getCurrentId();
+        String key = "likes:post:"+postId+":user:"+userId;
+        try{
+            if(!redisUtil.exists(key)){
+                return Result.error("还未点赞");
+            }
+            //更新帖子点赞表
+            userPostLikesMapper.delete(userId,postId);
+            //更新帖子点赞数
+            Posts posts = postsMapper.getPostById(postId);
+            posts.setLikeCount(posts.getLikeCount()-1);
+            postsMapper.UpdataPost(posts);
+            //更新帖子发帖人获赞数
+            User user = userMapper.getUserById(userId);
+            user.setLikeCount(user.getLikeCount()-1);
+            userMapper.updateUser(user);
+
+            //更新帖子详情缓存
+            PostDetailDVO postDetailDVO = postsMapper.selectPost(postId);
+            if(redisUtil.exists(key_)){
+                redisUtil.set(key_,postDetailDVO);
+            }
+            //更新板块内帖子分页缓存
+            if(redisUtil.exists("Posts:Sec:"+posts.getSectionId()+":postId:"+postId)){
+                delPostPage("Posts:Sec:"+posts.getSectionId()+":postId:"+postId);
+            }
+            //更新单个帖子缓存
+            updataPost("Posts:Sec:"+ posts.getSectionId() +":postId:"+posts.getId(),posts);
+
+            //更新发帖人获赞数缓存
+            redisUtil.Hset("user:"+user.getId(),"likeCount",user.getLikeCount());
+
+            //更新更新帖子点赞表缓存
+            //删除缓存
+            if(redisUtil.exists(key)){
+                redisUtil.delete(key);
+            }
+
+            return Result.success(true);
+
+        }catch (Exception e){
+            throw  new RuntimeException(e.getMessage());
+        }
+    }
+
+
+    /**
+     * 检查点赞状态
+     * @param postId
+     * @return
+     */
+    @Override
+    public Result<Boolean> checkLike(Long postId) {
+        if(BaseContext.getCurrentId()==null){
+            return Result.success(false);
+        }
+        Long userId = BaseContext.getCurrentId();
+        String key = "likes:post:"+postId+":user:"+userId;
+
+        try{
+
+            log.info("在缓存中检查");
+            if(redisUtil.exists(key)){
+                //存在
+                return Result.success(true);
+            }
+            //不存在
+            return Result.success(false);
+        }catch (Exception e){
+            return Result.error("检查点赞状态出错误");
+        }
     }
 
     //更新单条缓存

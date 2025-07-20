@@ -7,18 +7,12 @@
         SELECT
             p.*,
             u.username,
-            u.image AS image,
-            CASE
-                WHEN l.user_id IS NOT NULL THEN 1
-                ELSE 0
-                END AS liked
+            u.image AS image
+
         FROM posts p
                  INNER JOIN users u ON p.user_id = u.id
-                 LEFT JOIN user_post_likes l
-                           ON l.post_id = p.id
-                               AND l.user_id = #{userId}  -- 用户ID参数
         WHERE
-            p.id = #{postId}            -- 帖子ID参数
+            p.id = #{postId}
           AND p.status = 0
     </select>
 

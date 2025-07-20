@@ -75,16 +75,33 @@ public class PostsController {
 
     /**
      * 点赞帖子
-     * @param updataPostLikeDTO
+     * @param postId
      * @return
      */
 
 
-    @PostMapping("/likePost")
-    public Result likePost(@RequestBody UpdataPostLikeDTO updataPostLikeDTO) {
+    @PostMapping("/likePost/{postId}")
+    public Result<Boolean> likePost(@PathVariable Long postId) {
 
 
-        return  postsService.addlikeCount(updataPostLikeDTO);
+        return  postsService.likePost(postId);
+    }
+
+    /**
+     * 取消点赞
+     * @param postId
+     * @return
+     */
+
+    @DeleteMapping("/unlikePost")
+    public Result<Boolean> unlikePost(Long postId) {
+        return postsService.unlikePost(postId);
+    }
+
+    @GetMapping("/checkLike")
+    public Result<Boolean> checkLike(Long postId) {
+
+        return postsService.checkLike(postId);
     }
 
 

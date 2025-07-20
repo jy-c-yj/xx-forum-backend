@@ -43,10 +43,15 @@ public class LoginCheckInterceptor implements HandlerInterceptor {
                 return true;
             }
             Result error = Result.error("未登录，请登录");
+
+            if(url.contains("checktoggleLike")){
+                error = Result.success(false);
+            }
             response.setContentType("application/json;charset=UTF-8");
             response.getWriter().write(JSONObject.toJSONString(error));
             return false;
         }
+        //jwt令牌存在
         log.info("进行jwt登陆校验");
         log.info("token:{}", token);
         try {

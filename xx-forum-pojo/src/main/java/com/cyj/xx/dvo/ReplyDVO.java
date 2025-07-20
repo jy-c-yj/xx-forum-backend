@@ -65,12 +65,6 @@ public class ReplyDVO {
     private Long parentId = 0L;
 
     /**
-     * 点赞状态
-     */
-
-    private boolean liked = false;
-
-    /**
      * 子回复数组
      */
 

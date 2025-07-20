@@ -71,6 +71,9 @@ public class userController {
      */
     @GetMapping("/meanUser")
     public Result meanUser(){
+        if(BaseContext.getCurrentId()==null){
+            return Result.error("检查登陆");
+        }
         Long id = BaseContext.getCurrentId();
         MeanUser mu =userService.meanUser(id);
         return Result.success(mu);

@@ -15,6 +15,7 @@ import com.github.pagehelper.PageHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -146,6 +147,7 @@ public class SectionsServiceImpl implements SectionsService {
     }
 
     @Override
+    @Transactional
     public Result<MySectionDVO> followSec(Long sectionId) {
         Long userId = BaseContext.getCurrentId();
         String key = "Sec:myUserId:"+userId+":SecId:"+sectionId;
@@ -177,6 +179,7 @@ public class SectionsServiceImpl implements SectionsService {
     }
 
     @Override
+    @Transactional
     public Result<Boolean> unfollowSec(Long sectionId) {
         Long userId = BaseContext.getCurrentId();
         String key = "Sec:myUserId:"+userId+":SecId:"+sectionId;

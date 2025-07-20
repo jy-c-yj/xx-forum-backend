@@ -28,7 +28,10 @@ public class WebMvcConfiguration extends WebMvcConfigurationSupport {
                 .excludePathPatterns("/user/postdetail")
                 .excludePathPatterns("/user/addPostView")
                 .excludePathPatterns("/user/sections/hot")
-                .excludePathPatterns("/user/sections/sectionDetail");
+                .excludePathPatterns("/user/sections/sectionDetail")
+                .excludePathPatterns("/user/checklike")
+                .excludePathPatterns("/user/likePost/*")
+                .excludePathPatterns("/user//meanUser");
                 //.excludePathPatterns("/user/reply");
     }
 

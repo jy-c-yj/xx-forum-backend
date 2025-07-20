@@ -5,10 +5,10 @@ import com.cyj.xx.dto.NewReplyDTO;
 import com.cyj.xx.dto.RepliesPageDTO;
 import com.cyj.xx.dto.UpdataReplyLikeDTO;
 import com.cyj.xx.dvo.ReplyDVO;
-import com.cyj.xx.dvo.UpdataReplyLikedDVO;
 import com.cyj.xx.entity.Posts;
 import com.cyj.xx.entity.Replies;
 import com.cyj.xx.entity.User;
+import com.cyj.xx.entity.user_reply_likes;
 import com.cyj.xx.mapper.PostsMapper;
 import com.cyj.xx.mapper.RepliesMapper;
 import com.cyj.xx.mapper.UserMapper;
@@ -61,6 +61,16 @@ public class RepliesServiceImpl implements repliesService {
                         .total(replies.size())
                         .records(replies)
                         .build();
+                log.info("检查点赞数据是否以被缓存");
+                if(!redisUtil.exists("likes:isLikes")){
+                    log.info("不存在，将点赞表缓存");
+                    List<user_reply_likes> ll = userReplyLikesMapper.getAll();
+                    for(user_reply_likes like : ll){
+                        String key_ = "likes:reply:"+ like.getReplyId() +":user:"+ like.getUserId();
+                        redisUtil.set(key_,like);
+                    }
+                    redisUtil.set("likes:reply:isLikes","true");
+                }
                 return pageResult;
 
             }
@@ -73,14 +83,14 @@ public class RepliesServiceImpl implements repliesService {
 
             log.info("开始查询父回复");
             PageHelper.startPage(repliesPageDTO.getPage(), repliesPageDTO.getPageSize());
-            Page<ReplyDVO> page = repliesMapper.selectReliesbyPostId(repliesPageDTO.getPostid(),BaseContext.getCurrentId());
+            Page<ReplyDVO> page = repliesMapper.selectReliesbyPostId(repliesPageDTO.getPostid());
 
             //父回复集合
             List<ReplyDVO> replies = page.getResult();
             log.info("开始查询子回复");
 
             for(ReplyDVO Father : replies){
-                List<ReplyDVO> child = repliesMapper.selectChildReply(Father.getId(),BaseContext.getCurrentId());
+                List<ReplyDVO> child = repliesMapper.selectChildReply(Father.getId());
                 Father.setChildren(child);
             }
 
@@ -89,6 +99,7 @@ public class RepliesServiceImpl implements repliesService {
                     .total(page.getTotal())
                     .records(replies)
                     .build();
+
 
             //缓存分页数据
             redisUtil.pushAll(key1, replies,10, TimeUnit.MINUTES);
@@ -190,71 +201,114 @@ public class RepliesServiceImpl implements repliesService {
     }
 
     /**
-     * 点赞功能
-     * @param updataReplyLikeDTO
+     * 检查点赞状态
+     * @param replyId
+     * @return
+     */
+    @Override
+    public Result<Boolean> checktoggleLike(Long replyId) {
+
+        Long userId = BaseContext.getCurrentId();
+        String key = "likes:reply:"+replyId+":user:"+userId;
+
+        try{
+
+            log.info("在缓存中检查");
+            if(redisUtil.exists(key)){
+                //存在
+                return Result.success(true);
+            }
+            //不存在
+            return Result.success(false);
+        }catch (Exception e){
+            return Result.error("检查点赞状态出错误");
+        }
+    }
+
+
+    /**
+     * 点赞操作
+     * @param replyId
      * @return
      */
     @Override
     @Transactional
-    public Result UpdataReplyLike(UpdataReplyLikeDTO updataReplyLikeDTO) {
-        log.info("正在运行UpdataReplyLike，形参updataReplyLikeDTO===》{}",updataReplyLikeDTO);
+    public Result doToggleLike(Long replyId) {
+
+        Long userId = BaseContext.getCurrentId();
+        String key = "likes:reply:"+replyId+":user:"+userId;
+        try{
+            //更新点赞表
+            userReplyLikesMapper.insert(userId,replyId);
 
 
+            Replies replies = repliesMapper.getRepliesById(replyId);
+            User user = userMapper.getUserById(replies.getUserId());
 
-        Replies replies = repliesMapper.getRepliesById(updataReplyLikeDTO.getId());
-        replies.setId(updataReplyLikeDTO.getId());
-        replies.setLikeCount(updataReplyLikeDTO.getLikeCount());
-        UpdataReplyLikedDVO updataReplyLikedDVO = new UpdataReplyLikedDVO();
-
-        Integer likeCount = updataReplyLikeDTO.getLikeCount();
-        try {
-            User user = userMapper.getUserById(updataReplyLikeDTO.getUserId());
-            if(updataReplyLikeDTO.isLiked()){
-                log.info("执行取消点赞操作replies.getLikeCount()====>{}",replies.getLikeCount());
-                //执行取消点赞操作
-                replies.setLikeCount(replies.getLikeCount()-1);
-                log.info("执行取消点赞操作replies.getLikeCount()====>{}",replies.getLikeCount());
-                user.setLikeCount(user.getLikeCount()-1);
-                userReplyLikesMapper.delete(BaseContext.getCurrentId(),updataReplyLikeDTO.getId());
-                likeCount--;
-
-            }else {
-                log.info("执行点赞操作replies.getLikeCount()====>{}",replies.getLikeCount());
-                //执行点赞操作
-                replies.setLikeCount(replies.getLikeCount()+1);
-                log.info("执行赞操作replies.getLikeCount()====>{}",replies.getLikeCount());
-                user.setLikeCount(user.getLikeCount()+1);
-                userReplyLikesMapper.insert(BaseContext.getCurrentId(),updataReplyLikeDTO.getId());
-                updataReplyLikedDVO.setLiked(true);
-                likeCount++;
-            }
+            //更新被点赞回复的获赞数
+            replies.setLikeCount(replies.getLikeCount()+1);
             repliesMapper.updataReplies(replies);
+            //更新回复缓存
+            Set<String> kk = redisUtil.keys("replies:PostId:"+replies.getPostId()+":page:*");
+            redisUtil.delete(kk.toArray(new String[0]));
+
+            //更新被点赞人的获赞数
+            user.setLikeCount(user.getLikeCount()+1);
             userMapper.updateUser(user);
-            updataReplyLikedDVO.setReplyId(updataReplyLikeDTO.getId());
-            updataReplyLikedDVO.setLikeCount(likeCount);
+            //更新被点赞人的缓存
+            redisUtil.Hset("user:"+user.getId(),"likeCount",user.getLikeCount());
 
+            //更新缓存
+            redisUtil.set(key,"true");
 
-            //清空replies分页缓存
-            delRepliesPage("replies:PostId:" + replies.getPostId() + ":page:*");
-            //更新reply缓存
-            log.info("更新单个reply缓存");
-            updateRedis("replies:PostId:"+replies.getPostId() +":replyId:"+ replies.getId(),replies);
-            //更新user缓存
-            if(redisUtil.exists("user:"+user.getId())){
-                redisUtil.Hset("user:"+user.getId(),"likeCount",user.getLikeCount());
-            }
+            return Result.success(true);
 
-
-            return Result.success(updataReplyLikedDVO);
         }catch (Exception e){
-            e.printStackTrace();
+            return Result.error("点赞失败");
+        }
+    }
+
+
+    /**
+     * 取消点赞
+     * @param replyId
+     * @return
+     */
+    @Override
+    @Transactional
+    public Result<Boolean> untoggleLike(Long replyId) {
+        Long userId = BaseContext.getCurrentId();
+        String key = "likes:reply:"+replyId+":user:"+userId;
+        try{
+            //删除缓存
+            if(redisUtil.exists(key)){
+                redisUtil.delete(key);
+            }
+            //删除点赞表
+            userReplyLikesMapper.delete(userId,replyId);
+
+            Replies replies = repliesMapper.getRepliesById(replyId);
+            User user = userMapper.getUserById(replies.getUserId());
+            //更新被点赞回复获赞数
+            replies.setLikeCount(replies.getLikeCount()-1);
+            repliesMapper.updataReplies(replies);
+            //更新回复缓存
+            Set<String> kk = redisUtil.keys("replies:PostId:"+replies.getPostId()+":page:*");
+            redisUtil.delete(kk.toArray(new String[0]));
+            //更新被点赞用户获赞数
+            user.setLikeCount(user.getLikeCount()-1);
+            userMapper.updateUser(user);
+            //更新被点赞人的缓存
+            redisUtil.Hset("user:"+user.getId(),"likeCount",user.getLikeCount());
+
+            return Result.success(true);
+        }catch (Exception e){
+            return Result.error("取消点赞出错");
         }
 
-
-
-        return Result.error("操作失败");
     }
-    public  void updateRedis(String itemKey,Replies replies){
+
+    public  void updateRedis(String itemKey, Replies replies){
 
             redisUtil.set(itemKey, replies);
 
