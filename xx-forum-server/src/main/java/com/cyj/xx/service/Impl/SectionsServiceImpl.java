@@ -84,7 +84,7 @@ public class SectionsServiceImpl implements SectionsService {
 
         try{
             log.info("获取缓存数据");
-            String key = "Sec:myUserId:"+id+":SecId:";
+            String key = "Sec:mySection:UserId:"+id+":SecId:";
             Set set =  redisUtil.keys(key+"*");
             List<String> l = new ArrayList<>(set);
             List<MySectionDVO> ll = new ArrayList<>();
@@ -94,12 +94,7 @@ public class SectionsServiceImpl implements SectionsService {
                 }
                 return Result.success(ll);
             }
-//            if(redisUtil.exists(key)){
-//                log.info("获取缓存数据");
-//                List<MySectionDVO> ll = redisUtil.GetAll(key);
-//                return Result.success(ll);
-//
-//            }
+
             log.info("缓存数据不存在");
             List<MySectionDVO> mySec =  sectionsMapper.getMySection(id);
 
@@ -123,9 +118,23 @@ public class SectionsServiceImpl implements SectionsService {
     @Override
     public Result<Section> sectionDetail(Long id) {
 
+        String key = "Sec:sectionDetail:SectionId:"+id;
+
         try{
+            //查询缓存
+            log.info ("查询缓存");
+            if(redisUtil.exists(key)){
+                //存在
+                Section sec =  (Section) redisUtil.get(key);
+                return Result.success(sec);
+            }
+            //不存在
             log.info("开始查询板块 当前板块id ===> {}",id);
             Section sec =  sectionsMapper.getSectionById(id);
+            //加载缓存
+            log.info("开始加载缓存");
+            redisUtil.set(key,sec,1,TimeUnit.HOURS);
+
             return Result.success(sec);
         }
         catch (Exception e){
@@ -138,7 +147,7 @@ public class SectionsServiceImpl implements SectionsService {
     @Override
     public Result<Boolean> isFollowSec(Long sectionId) {
         Long userId = BaseContext.getCurrentId();
-        String key = "Sec:myUserId:"+userId+":SecId:"+sectionId;
+        String key = "Sec:mySection:UserId:"+userId+":SecId:"+sectionId;
         if(redisUtil.exists(key)){
             return Result.success(true);
         }else {
@@ -150,7 +159,7 @@ public class SectionsServiceImpl implements SectionsService {
     @Transactional
     public Result<MySectionDVO> followSec(Long sectionId) {
         Long userId = BaseContext.getCurrentId();
-        String key = "Sec:myUserId:"+userId+":SecId:"+sectionId;
+        String key = "Sec:mySection:UserId:"+userId+":SecId:"+sectionId;
         try {
 
             if (redisUtil.exists(key)) {
@@ -182,7 +191,7 @@ public class SectionsServiceImpl implements SectionsService {
     @Transactional
     public Result<Boolean> unfollowSec(Long sectionId) {
         Long userId = BaseContext.getCurrentId();
-        String key = "Sec:myUserId:"+userId+":SecId:"+sectionId;
+        String key = "Sec:mySection:UserId:"+userId+":SecId:"+sectionId;
         try{
             //删除缓存
             if(redisUtil.exists(key)){

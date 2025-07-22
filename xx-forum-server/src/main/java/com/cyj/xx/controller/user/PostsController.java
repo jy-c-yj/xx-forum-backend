@@ -98,10 +98,51 @@ public class PostsController {
         return postsService.unlikePost(postId);
     }
 
+    /**
+     * 检查点赞状态
+     * @param postId
+     * @return
+     */
     @GetMapping("/checkLike")
     public Result<Boolean> checkLike(Long postId) {
 
         return postsService.checkLike(postId);
+    }
+
+    /**
+     * 收藏帖子
+     * @param postId
+     * @return
+     */
+
+
+    @PostMapping("/collectPost/{postId}")
+    public Result<Boolean> collectPost(@PathVariable Long postId) {
+
+
+        return  postsService.collectPost(postId);
+    }
+
+    /**
+     * 取消收藏
+     * @param postId
+     * @return
+     */
+
+    @DeleteMapping("/uncollectPost")
+    public Result<Boolean> uncollectPost(Long postId) {
+        return postsService.uncollectPost(postId);
+    }
+
+    /**
+     * 检查收藏状态
+     * @param postId
+     * @return
+     */
+    @GetMapping("/checkCollect")
+    public Result<Boolean> checkCollect(Long postId) {
+
+        return postsService.checkCollect(postId);
     }
 
 

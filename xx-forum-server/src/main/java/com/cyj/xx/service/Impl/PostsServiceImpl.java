@@ -7,12 +7,10 @@ import com.cyj.xx.dto.UpdataPostLikeDTO;
 import com.cyj.xx.dvo.PostDetailDVO;
 import com.cyj.xx.dvo.PostsHomeDVO;
 import com.cyj.xx.dvo.UpdataPostLikedDVO;
-import com.cyj.xx.entity.Posts;
-import com.cyj.xx.entity.User;
-import com.cyj.xx.entity.user_post_likes;
-import com.cyj.xx.entity.user_reply_likes;
+import com.cyj.xx.entity.*;
 import com.cyj.xx.mapper.PostsMapper;
 import com.cyj.xx.mapper.UserMapper;
+import com.cyj.xx.mapper.UserPostCollectionMapper;
 import com.cyj.xx.mapper.UserPostLikesMapper;
 import com.cyj.xx.result.PageResult;
 import com.cyj.xx.result.Result;
@@ -42,6 +40,8 @@ public class PostsServiceImpl implements postsService {
     UserMapper userMapper;
     @Autowired
     UserPostLikesMapper userPostLikesMapper;
+    @Autowired
+    UserPostCollectionMapper userPostCollectionMapper;
     @Autowired
     private RedisUtil redisUtil;
 
@@ -141,7 +141,17 @@ public class PostsServiceImpl implements postsService {
                         String key_ = "likes:post:"+ like.getPostId() +":user:"+ like.getUserId();
                         redisUtil.set(key_,like);
                     }
-                    redisUtil.set("likes:reply:isLikes","true");
+                    redisUtil.set("likes:post:isLikes","true");
+
+                }
+                if(!redisUtil.exists("collection:post:isCollect")){
+                    log.info("将帖子收藏表加入缓存");
+                    List<user_post_collection> ll = userPostCollectionMapper.getAll();
+                    for(user_post_collection col : ll){
+                        String key_ = "likes:post:"+ col.getPostId() +":user:"+ col.getUserId();
+                        redisUtil.set(key_,col);
+                    }
+                    redisUtil.set("collection:post:isCollect","true");
 
                 }
 
@@ -337,6 +347,128 @@ public class PostsServiceImpl implements postsService {
             return Result.success(false);
         }catch (Exception e){
             return Result.error("检查点赞状态出错误");
+        }
+    }
+
+    /**
+     * 收藏操作
+     * @param postId
+     * @return
+     */
+
+    @Override
+    public Result<Boolean> collectPost(Long postId) {
+        if(BaseContext.getCurrentId() == null){
+            return Result.error("请登录");
+        }
+        String key_ = "Posts:postdetail:"+postId;
+        Long userId = BaseContext.getCurrentId();
+        String key = "collection:post:"+postId+":user:"+userId;
+        try{
+            if(redisUtil.exists(key)){
+                return Result.error("已收藏");
+            }
+            //更新帖子收藏表
+            userPostCollectionMapper.insert(userId,postId);
+            //更新帖子收藏数
+            Posts posts = postsMapper.getPostById(postId);
+            posts.setLikeCount(posts.getCollectCount()+1);
+            postsMapper.UpdataPost(posts);
+
+            //更新帖子详情缓存
+            PostDetailDVO postDetailDVO = postsMapper.selectPost(postId);
+            if(redisUtil.exists(key_)){
+                redisUtil.set(key_,postDetailDVO);
+            }
+            //更新板块内帖子分页缓存
+            if(redisUtil.exists("Posts:Sec:"+posts.getSectionId()+":postId:"+postId)){
+                delPostPage("Posts:Sec:"+posts.getSectionId()+":postId:"+postId);
+            }
+            //更新单个帖子缓存
+            updataPost("Posts:Sec:"+ posts.getSectionId() +":postId:"+posts.getId(),posts);
+
+            //更新更新帖子收藏表缓存
+            user_post_collection collection = userPostCollectionMapper.getlike(postId,userId);
+            redisUtil.set("collection:post:"+postId+":user:"+userId,collection);
+
+            return Result.success(true);
+
+        }catch (Exception e){
+            throw  new RuntimeException(e.getMessage());
+        }
+
+    }
+
+    /**
+     * 取消收藏
+     * @param postId
+     * @return
+     */
+    @Override
+    public Result<Boolean> uncollectPost(Long postId) {
+        String key_ = "Posts:postdetail:"+postId;
+        Long userId = BaseContext.getCurrentId();
+        String key = "collection:post:"+postId+":user:"+userId;
+        try{
+            if(!redisUtil.exists(key)){
+                return Result.error("还未点赞");
+            }
+            //更新帖子收藏表
+            userPostCollectionMapper.delete(userId,postId);
+            //更新帖子收藏数
+            Posts posts = postsMapper.getPostById(postId);
+            posts.setLikeCount(posts.getCollectCount()-1);
+            postsMapper.UpdataPost(posts);
+
+            //更新帖子详情缓存
+            PostDetailDVO postDetailDVO = postsMapper.selectPost(postId);
+            if(redisUtil.exists(key_)){
+                redisUtil.set(key_,postDetailDVO);
+            }
+            //更新板块内帖子分页缓存
+            if(redisUtil.exists("Posts:Sec:"+posts.getSectionId()+":postId:"+postId)){
+                delPostPage("Posts:Sec:"+posts.getSectionId()+":postId:"+postId);
+            }
+            //更新单个帖子缓存
+            updataPost("Posts:Sec:"+ posts.getSectionId() +":postId:"+posts.getId(),posts);
+
+            //更新更新帖子收藏表缓存
+            //删除缓存
+            if(redisUtil.exists(key)){
+                redisUtil.delete(key);
+            }
+
+            return Result.success(true);
+
+        }catch (Exception e){
+            throw  new RuntimeException(e.getMessage());
+        }
+    }
+
+    /**
+     * 检查收藏状态
+     * @param postId
+     * @return
+     */
+    @Override
+    public Result<Boolean> checkCollect(Long postId) {
+        if(BaseContext.getCurrentId()==null){
+            return Result.success(false);
+        }
+        Long userId = BaseContext.getCurrentId();
+        String key = "collection:post:"+postId+":user:"+userId;
+
+        try{
+
+            log.info("在缓存中检查");
+            if(redisUtil.exists(key)){
+                //存在
+                return Result.success(true);
+            }
+            //不存在
+            return Result.success(false);
+        }catch (Exception e){
+            return Result.error("检查post收藏状态出错误");
         }
     }
 

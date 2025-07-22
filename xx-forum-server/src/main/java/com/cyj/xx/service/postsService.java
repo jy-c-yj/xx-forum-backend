@@ -20,4 +20,10 @@ public interface postsService {
     Result<Boolean> unlikePost(Long postId);
 
     Result<Boolean> checkLike(Long postId);
+
+    Result<Boolean> collectPost(Long postId);
+
+    Result<Boolean> uncollectPost(Long postId);
+
+    Result<Boolean> checkCollect(Long postId);
 }
