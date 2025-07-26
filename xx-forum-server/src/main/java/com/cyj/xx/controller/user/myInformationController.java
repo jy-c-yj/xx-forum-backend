@@ -105,4 +105,16 @@ public class myInformationController {
         Long userId = BaseContext.getCurrentId();
         return myInformationServiceImpl.getPost(userId ,pageNum,pageSize);
     }
+    /**
+     * 我的收藏
+     * @return
+     */
+    @GetMapping("/myColletion")
+    public Result<PageResult> myColletion(int pageNum,int pageSize) {
+        if(BaseContext.getCurrentId() == null){
+            return Result.error("登陆已过期");
+        }
+        Long userId = BaseContext.getCurrentId();
+        return myInformationServiceImpl.getPost(userId ,pageNum,pageSize);
+    }
 }
