@@ -79,4 +79,24 @@
         WHERE id = #{id}
     </update>
 
+    <select id="getMyRepliesById" resultType="com.cyj.xx.dvo.MyInformationReplyDVO">
+        SELECT
+            r.id,
+            r.content,
+            r.created_time AS createdTime,
+            r.post_id AS postId,
+            p.title,
+            (SELECT COUNT(*) FROM replies WHERE post_id = p.id AND status = 0) AS replyCount,
+            s.id AS sectionId,
+            s.name AS sectionName
+        FROM replies r
+                 INNER JOIN posts p ON r.post_id = p.id
+                 INNER JOIN sections s ON p.section_id = s.id
+        WHERE
+            r.user_id = #{userId}
+          AND r.status = 0  -- 只查询正常状态的回复
+          AND p.status = 0  -- 只查询正常状态的帖子
+        ORDER BY r.created_time DESC
+    </select>
+
 </mapper>

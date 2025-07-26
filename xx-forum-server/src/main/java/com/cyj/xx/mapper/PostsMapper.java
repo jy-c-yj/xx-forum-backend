@@ -3,6 +3,8 @@ package com.cyj.xx.mapper;
 
 import com.cyj.xx.dto.PostsPageDTO;
 import com.cyj.xx.dto.SecPostsPageDTO;
+import com.cyj.xx.dvo.MyInformationMainPostsDVO;
+import com.cyj.xx.dvo.MyInformationPostDVO;
 import com.cyj.xx.dvo.PostDetailDVO;
 import com.cyj.xx.dvo.PostsHomeDVO;
 import com.cyj.xx.entity.Posts;
@@ -12,7 +14,6 @@ import org.apache.ibatis.annotations.Select;
 
 @Mapper
 public interface PostsMapper {
-
 
     public Page<PostsHomeDVO> page(PostsPageDTO postsPageDTO);
 
@@ -24,4 +25,10 @@ public interface PostsMapper {
     Posts getPostById(Long postId);
 
     Page<PostsHomeDVO> Secpage(SecPostsPageDTO secPostsPageDTO);
+
+    void addNewPost(Posts post);
+
+    Page<MyInformationMainPostsDVO> getPostByUserId(Long userId);
+
+    Page<MyInformationPostDVO> getMyPostsByUserId(Long userId);
 }

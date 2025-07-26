@@ -84,7 +84,7 @@ public class SectionsServiceImpl implements SectionsService {
 
         try{
             log.info("获取缓存数据");
-            String key = "Sec:mySection:UserId:"+id+":SecId:";
+            String key = "Sec:followSection:UserId:"+id+":SecId:";
             Set set =  redisUtil.keys(key+"*");
             List<String> l = new ArrayList<>(set);
             List<MySectionDVO> ll = new ArrayList<>();
@@ -147,7 +147,7 @@ public class SectionsServiceImpl implements SectionsService {
     @Override
     public Result<Boolean> isFollowSec(Long sectionId) {
         Long userId = BaseContext.getCurrentId();
-        String key = "Sec:mySection:UserId:"+userId+":SecId:"+sectionId;
+        String key = "Sec:followSection:UserId:"+userId+":SecId:"+sectionId;
         if(redisUtil.exists(key)){
             return Result.success(true);
         }else {
@@ -159,7 +159,7 @@ public class SectionsServiceImpl implements SectionsService {
     @Transactional
     public Result<MySectionDVO> followSec(Long sectionId) {
         Long userId = BaseContext.getCurrentId();
-        String key = "Sec:mySection:UserId:"+userId+":SecId:"+sectionId;
+        String key = "Sec:followSection:UserId:"+userId+":SecId:"+sectionId;
         try {
 
             if (redisUtil.exists(key)) {
@@ -191,7 +191,7 @@ public class SectionsServiceImpl implements SectionsService {
     @Transactional
     public Result<Boolean> unfollowSec(Long sectionId) {
         Long userId = BaseContext.getCurrentId();
-        String key = "Sec:mySection:UserId:"+userId+":SecId:"+sectionId;
+        String key = "Sec:followSection:UserId:"+userId+":SecId:"+sectionId;
         try{
             //删除缓存
             if(redisUtil.exists(key)){

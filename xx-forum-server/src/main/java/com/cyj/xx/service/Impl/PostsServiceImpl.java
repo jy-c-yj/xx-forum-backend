@@ -1,6 +1,7 @@
 package com.cyj.xx.service.Impl;
 
 import com.cyj.xx.context.BaseContext;
+import com.cyj.xx.dto.PostPushDTO;
 import com.cyj.xx.dto.PostsPageDTO;
 import com.cyj.xx.dto.SecPostsPageDTO;
 import com.cyj.xx.dto.UpdataPostLikeDTO;
@@ -8,10 +9,7 @@ import com.cyj.xx.dvo.PostDetailDVO;
 import com.cyj.xx.dvo.PostsHomeDVO;
 import com.cyj.xx.dvo.UpdataPostLikedDVO;
 import com.cyj.xx.entity.*;
-import com.cyj.xx.mapper.PostsMapper;
-import com.cyj.xx.mapper.UserMapper;
-import com.cyj.xx.mapper.UserPostCollectionMapper;
-import com.cyj.xx.mapper.UserPostLikesMapper;
+import com.cyj.xx.mapper.*;
 import com.cyj.xx.result.PageResult;
 import com.cyj.xx.result.Result;
 import com.cyj.xx.service.postsService;
@@ -25,6 +23,7 @@ import org.springframework.stereotype.Service;
 import com.github.pagehelper.PageHelper;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -42,6 +41,9 @@ public class PostsServiceImpl implements postsService {
     UserPostLikesMapper userPostLikesMapper;
     @Autowired
     UserPostCollectionMapper userPostCollectionMapper;
+
+    @Autowired
+    SectionsMapper sectionsMapper;
     @Autowired
     private RedisUtil redisUtil;
 
@@ -184,6 +186,11 @@ public class PostsServiceImpl implements postsService {
             return Result.error("操作错误");
         }
         Posts posts = new Posts();
+        if(viewCount <= 0){
+            Posts pp = postsMapper.getPostById(id);
+            viewCount = pp.getViewCount();
+        }
+
         posts.setId(id);
         log.info("观看数增加  viewCount{} =======> {}",viewCount,viewCount+1);
         viewCount++;
@@ -472,6 +479,69 @@ public class PostsServiceImpl implements postsService {
         }
     }
 
+
+    /**
+     * 发帖
+     * @param postPushDTO
+     * @return
+     */
+    @Override
+    @Transactional
+    public Result<Posts> pushPost(PostPushDTO postPushDTO) {
+
+
+        if(BaseContext.getCurrentId() == null){
+            return Result.error("登陆已过期");
+        }
+        try{
+            Posts posts = Posts.builder()
+                    .title(postPushDTO.getTitle())
+                    .content(postPushDTO.getContent())
+                    .sectionId(postPushDTO.getSectionId())
+                    .userId(BaseContext.getCurrentId())
+                    .likeCount(0)
+                    .collectCount(0)
+                    .createdTime(LocalDateTime.now())
+                    .updatedTime(LocalDateTime.now())
+                    .isEssence(false)
+                    .isTop(false)
+                    .viewCount(0)
+                    .status(0)
+                    .replyCount(0)
+                    .build();
+
+            postsMapper.addNewPost(posts);
+
+            //更新板块表帖子数
+            Section sec = sectionsMapper.getSectionById(Long.parseLong(Integer.toString(postPushDTO.getSectionId())) );
+            sec.setPostCount(posts.getCollectCount()+1);
+            postsMapper.UpdataPost(posts);
+            //更新用户发帖数
+            User user = userMapper.getUserById(BaseContext.getCurrentId());
+            user.setPostCount(user.getPostCount()+1);
+            userMapper.updateUser(user);
+
+            //更新板块详情缓存
+            String key1 ="Posts:Sec:"+ postPushDTO.getSectionId()+":postId:"+posts.getId();
+            if(redisUtil.exists(key1)){
+                redisUtil.set(key1,posts);
+            }
+            //删除板块帖子分页显示缓存
+            delPostPage("Posts:Sec:"+ postPushDTO .getSectionId()+":page:*");
+
+            //更新用户缓存
+            if(redisUtil.exists("user:"+user.getId())){
+                redisUtil.Hset("user:"+user.getId(),"postCount",user.getPostCount());
+            }
+
+            return Result.success(posts);
+
+        }catch (Exception e){
+            return Result.error("发帖失败");
+        }
+
+    }
+
     //更新单条缓存
     public void updataPost(String key,Posts post){
 
@@ -481,6 +551,9 @@ public class PostsServiceImpl implements postsService {
     //清空分页缓存
     public void delPostPage(String pattern){
         Set<String> kk = redisUtil.keys(pattern);
+        if(kk.isEmpty()){
+            return;
+        }
         redisUtil.delete(kk.toArray(new String[0]));
     }
 

@@ -162,9 +162,10 @@ public class RepliesServiceImpl implements repliesService {
             repliesMapper.addReply(replies);
             log.info("新增reply成功");
 
-            //更新post回复数
+            //更新post回复数,最后回复时间
             Posts post =  postsMapper.getPostById(newReplyDTO.getPostId());
             post.setReplyCount(post.getReplyCount()+1);
+            post.setLastReplyTime(LocalDateTime.now());
             postsMapper.UpdataPost(post);
             //更新post缓存
             //清空分页缓存
@@ -177,17 +178,8 @@ public class RepliesServiceImpl implements repliesService {
 
             ReplyDVO replyDVO =  repliesMapper.getReplyById(replies.getId());
 
-            //清空分页缓存
-//            String pattern = "replies:" + newReplyDTO.getPostId() + ":page:*";
-//            Set<String> keys = redisUtil.keys(pattern);
-//            redisUtil.delete(keys.toArray(new String[0]));
             delRepliesPage("replies:PostId:" + newReplyDTO.getPostId() + ":page:*");
 
-            // 2. 更新单条缓存
-//            String itemKey = key + replies.getId();
-//            if (!redisUtil.exists(itemKey)) {
-//                redisUtil.set(itemKey, replies);
-//            }
             log.info("更新单条缓存");
             BeanUtils.copyProperties(replyDVO,replies);
             updateRedis("replies:PostId:"+newReplyDTO.getPostId()+":replyId:"+replies.getId(),replies);
@@ -315,6 +307,9 @@ public class RepliesServiceImpl implements repliesService {
     }
     public void delRepliesPage(String pattern){
         Set<String> keys = redisUtil.keys(pattern);
+        if(keys.isEmpty()){
+            return ;
+        }
         redisUtil.delete(keys.toArray(new String[0]));
     }
 }

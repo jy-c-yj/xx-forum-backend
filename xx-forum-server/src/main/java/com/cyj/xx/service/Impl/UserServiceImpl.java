@@ -7,6 +7,7 @@ import com.cyj.xx.dto.UserEnrollDTO;
 import com.cyj.xx.dto.UserLoginDTO;
 import com.cyj.xx.dto.UserReviseDTO;
 import com.cyj.xx.dvo.MeanUser;
+import com.cyj.xx.dvo.UserInformationDVO;
 import com.cyj.xx.dvo.UserLoginDVO;
 import com.cyj.xx.dvo.UserPersonalDVO;
 import com.cyj.xx.entity.User;
@@ -210,7 +211,7 @@ public class UserServiceImpl implements userService {
     }
 
     /**
-     * 个人信息显示
+     * 主页部分个人信息显示
      * @param username
      * @return
      */
@@ -334,4 +335,5 @@ public class UserServiceImpl implements userService {
         return Result.success();
 
     }
+
 }

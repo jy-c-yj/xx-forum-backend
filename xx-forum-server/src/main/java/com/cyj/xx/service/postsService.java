@@ -1,6 +1,7 @@
 package com.cyj.xx.service;
 
 import com.cyj.xx.dto.*;
+import com.cyj.xx.entity.Posts;
 import com.cyj.xx.result.PageResult;
 import com.cyj.xx.result.Result;
 
@@ -26,4 +27,6 @@ public interface postsService {
     Result<Boolean> uncollectPost(Long postId);
 
     Result<Boolean> checkCollect(Long postId);
+
+    Result<Posts> pushPost(PostPushDTO postPushDTO);
 }

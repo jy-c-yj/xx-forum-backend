@@ -1,6 +1,7 @@
 package com.cyj.xx.mapper;
 
 
+import com.cyj.xx.dvo.MyInformationReplyDVO;
 import com.cyj.xx.dvo.ReplyDVO;
 import com.cyj.xx.entity.Replies;
 import com.cyj.xx.entity.User;
@@ -31,4 +32,6 @@ public interface RepliesMapper {
 
 
     List<ReplyDVO> selectChildReply(Long replyid);
+
+    Page<MyInformationReplyDVO> getMyRepliesById(Long userId);
 }

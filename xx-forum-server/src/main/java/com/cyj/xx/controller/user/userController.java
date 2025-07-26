@@ -7,6 +7,7 @@ import com.cyj.xx.dto.UserEnrollDTO;
 import com.cyj.xx.dto.UserLoginDTO;
 import com.cyj.xx.dto.UserReviseDTO;
 import com.cyj.xx.dvo.MeanUser;
+import com.cyj.xx.dvo.UserInformationDVO;
 import com.cyj.xx.dvo.UserLoginDVO;
 import com.cyj.xx.result.Result;
 import com.cyj.xx.service.Impl.UserServiceImpl;
@@ -113,7 +114,7 @@ public class userController {
     }
 
     /**
-     * 显示个人信息
+     * 主页部分个人信息显示
      * @param username
      * @return
      */

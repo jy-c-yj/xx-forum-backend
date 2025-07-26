@@ -4,6 +4,7 @@ package com.cyj.xx.mapper;
 import com.cyj.xx.dvo.HotSectionsDVO;
 import com.cyj.xx.dvo.MySectionDVO;
 import com.cyj.xx.entity.Section;
+import com.cyj.xx.entity.sections_follows;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
@@ -19,4 +20,7 @@ public interface SectionFollowsMapper {
 
     @Delete("DELETE FROM section_follows where section_id = #{sectionId} and user_id = #{userId}")
     void unfollowSec(Long userId, Long sectionId);
+
+    @Select("SELECT * FROM section_follows where user_id = #{userId}")
+    List<sections_follows> findMySections(Long userId);
 }

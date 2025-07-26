@@ -1,11 +1,9 @@
 package com.cyj.xx.controller.user;
 
 
-import com.cyj.xx.dto.PostsPageDTO;
-import com.cyj.xx.dto.RepliesPageDTO;
-import com.cyj.xx.dto.SecPostsPageDTO;
-import com.cyj.xx.dto.UpdataPostLikeDTO;
+import com.cyj.xx.dto.*;
 import com.cyj.xx.dvo.ReplyDVO;
+import com.cyj.xx.entity.Posts;
 import com.cyj.xx.result.PageResult;
 import com.cyj.xx.result.Result;
 import com.cyj.xx.service.Impl.PostsServiceImpl;
@@ -143,6 +141,19 @@ public class PostsController {
     public Result<Boolean> checkCollect(Long postId) {
 
         return postsService.checkCollect(postId);
+    }
+
+    /**
+     * 发帖
+     * @param postPushDTO
+     * @return
+     */
+
+    @PostMapping("/pushPost")
+    public Result<Posts> pushPost(@RequestBody PostPushDTO postPushDTO) {
+
+
+        return postsService.pushPost(postPushDTO);
     }
 
 
