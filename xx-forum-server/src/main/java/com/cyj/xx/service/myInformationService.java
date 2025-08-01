@@ -22,4 +22,6 @@ public interface myInformationService {
     Result<PageResult> getReply(Long userId,int pageNum,int pageSize);
 
     Result<PageResult> getPost(Long userId, int pageNum, int pageSize);
+
+    Result<PageResult> getMyCollection(Long userId, int pageNum, int pageSize);
 }

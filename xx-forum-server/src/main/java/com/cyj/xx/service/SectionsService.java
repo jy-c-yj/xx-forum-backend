@@ -4,6 +4,7 @@ import com.cyj.xx.dvo.HotSectionsDVO;
 import com.cyj.xx.dvo.MySectionDVO;
 import com.cyj.xx.entity.Section;
 import com.cyj.xx.entity.admin;
+import com.cyj.xx.result.PageResult;
 import com.cyj.xx.result.Result;
 
 import java.util.List;
@@ -22,4 +23,6 @@ public interface SectionsService {
     Result<Boolean> isFollowSec(Long sectionId);
 
     Result<Boolean> unfollowSec(Long sectionId);
+
+    Result<PageResult> searchPost(String keyword, int page, int size);
 }

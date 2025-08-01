@@ -29,4 +29,6 @@ public interface postsService {
     Result<Boolean> checkCollect(Long postId);
 
     Result<Posts> pushPost(PostPushDTO postPushDTO);
+
+    Result<PageResult> searchPost(String keyword, int page, int size);
 }

@@ -138,5 +138,45 @@
         ORDER BY p.created_time DESC
     </select>
 
+    <select id="getMyCollectionByUserId" resultType="com.cyj.xx.dvo.MyInformationMyCollectionDVO">
+        SELECT
+            p.id AS id,
+            p.title AS title,
+            p.user_id AS userId,
+            u.username AS userName,
+            p.created_time AS createdTime
+        FROM
+            user_post_collections c
+                INNER JOIN
+            posts p ON c.post_id = p.id
+                INNER JOIN
+            users u ON p.user_id = u.id
+        WHERE
+            c.user_id = #{userId}
+          AND c.status = 1  -- 只查询已收藏状态
+          AND p.status = 0  -- 只查询正常状态的帖子
+        ORDER BY
+            c.created_time DESC  -- 按收藏时间倒序
+    </select>
+    <select id="searchPost" resultType="com.cyj.xx.dvo.SearchPost">
+        SELECT
+        p.id,
+        p.title,
+        p.content,
+        p.section_id AS sectionId,
+        s.name AS sectionName,
+        p.created_time AS createdTime
+        FROM posts p
+        JOIN sections s ON p.section_id = s.id
+        WHERE p.title LIKE CONCAT('%', #{keyword}, '%')
+        ORDER BY
+        CASE
+        WHEN p.title = #{keyword} THEN 1 <!-- 完全匹配优先级最高 -->
+        WHEN p.title LIKE CONCAT(#{keyword}, '%') THEN 2 <!-- 开头匹配次高 -->
+        ELSE 3 <!-- 其他匹配 -->
+        END,
+        LOCATE(#{keyword}, p.title), <!-- 关键词出现位置越靠前优先级越高 -->
+        p.created_time DESC <!-- 最后按时间倒序 -->
+    </select>
 
 </mapper>

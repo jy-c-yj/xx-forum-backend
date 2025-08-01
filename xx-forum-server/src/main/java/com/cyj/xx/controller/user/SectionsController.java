@@ -5,9 +5,12 @@ import com.cyj.xx.context.BaseContext;
 import com.cyj.xx.dvo.HotSectionsDVO;
 import com.cyj.xx.dvo.MySectionDVO;
 import com.cyj.xx.entity.Section;
+import com.cyj.xx.result.PageResult;
 import com.cyj.xx.result.Result;
 import com.cyj.xx.service.SectionsService;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.annotations.Delete;
+import org.apache.ibatis.annotations.Select;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,6 +18,7 @@ import java.util.List;
 
 @RestController
 @RequestMapping("/user/sections")
+@Slf4j
 public class SectionsController {
 
     @Autowired
@@ -77,5 +81,20 @@ public class SectionsController {
     }
 
 
+    /**
+     * 搜索相关板块
+     * @param keyword
+     * @param page
+     * @param size
+     * @return
+     */
+    @GetMapping("/section/search")
+    public Result<PageResult> searchPost(@RequestParam("q") String keyword,
+                                         @RequestParam(value = "pageNum", defaultValue = "0") int page,
+                                         @RequestParam(value = "pageSize", defaultValue = "10") int size){
+
+        return sectionsService.searchPost(keyword,page,size);
+
+    }
 
 }

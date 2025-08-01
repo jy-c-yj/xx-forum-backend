@@ -109,12 +109,12 @@ public class myInformationController {
      * 我的收藏
      * @return
      */
-    @GetMapping("/myColletion")
+    @GetMapping("/myCollection")
     public Result<PageResult> myColletion(int pageNum,int pageSize) {
         if(BaseContext.getCurrentId() == null){
             return Result.error("登陆已过期");
         }
         Long userId = BaseContext.getCurrentId();
-        return myInformationServiceImpl.getPost(userId ,pageNum,pageSize);
+        return myInformationServiceImpl.getMyCollection(userId ,pageNum,pageSize);
     }
 }

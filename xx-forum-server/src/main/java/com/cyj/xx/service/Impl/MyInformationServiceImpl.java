@@ -230,4 +230,27 @@ public class MyInformationServiceImpl implements myInformationService {
             return Result.error("获取帖子失败: " + e.getMessage());
         }
     }
+
+
+
+    /**
+     * 我的收藏
+     * @return
+     */
+    @Override
+    public Result<PageResult> getMyCollection(Long userId, int pageNum, int pageSize) {
+        try {
+            PageHelper.startPage(pageNum, pageSize);
+            Page<MyInformationMyCollectionDVO> page = postsMapper.getMyCollectionByUserId(userId);
+            PageResult pr = new PageResult();
+            pr.setTotal(page.getTotal());
+            pr.setRecords(page.getResult());
+            return Result.success(pr);
+
+
+        } catch (Exception e) {
+            log.error("获取用户帖子失败");
+            return Result.error("获取帖子失败: " + e.getMessage());
+        }
+    }
 }

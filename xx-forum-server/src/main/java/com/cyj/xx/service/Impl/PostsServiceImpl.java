@@ -7,6 +7,7 @@ import com.cyj.xx.dto.SecPostsPageDTO;
 import com.cyj.xx.dto.UpdataPostLikeDTO;
 import com.cyj.xx.dvo.PostDetailDVO;
 import com.cyj.xx.dvo.PostsHomeDVO;
+import com.cyj.xx.dvo.SearchPost;
 import com.cyj.xx.dvo.UpdataPostLikedDVO;
 import com.cyj.xx.entity.*;
 import com.cyj.xx.mapper.*;
@@ -557,4 +558,19 @@ public class PostsServiceImpl implements postsService {
         redisUtil.delete(kk.toArray(new String[0]));
     }
 
+
+    @Override
+    public Result<PageResult> searchPost(String keyword, int page, int size) {
+        try{
+            PageHelper.startPage(page,size);
+            Page<SearchPost> p =  postsMapper.searchPost(keyword);
+            PageResult pageResult = new PageResult();
+            pageResult.setTotal(p.getTotal());
+            pageResult.setRecords(p.getResult());
+            return Result.success(pageResult);
+
+        }catch (Exception e){
+            return Result.error("查询失败");
+        }
+    }
 }

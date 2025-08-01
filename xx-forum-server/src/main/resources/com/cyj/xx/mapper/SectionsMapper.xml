@@ -42,6 +42,29 @@
         WHERE id = #{id}
     </update>
 
+    <select id="searchPost" resultType="com.cyj.xx.dvo.SearchPost">
+        SELECT
+        id,
+        name,
+        description,
+        followers_count AS followersCount,
+        created_time AS createdTime,
+        post_count AS postCount,
+        image
+        FROM sections
+        <if test="keyword != null and keyword != ''">
+            WHERE name LIKE CONCAT('%', #{keyword}, '%')
+        </if>
+        ORDER BY
+        CASE
+        WHEN name = #{keyword} THEN 1  <!-- 完全匹配排最前 -->
+        WHEN name LIKE CONCAT(#{keyword}, '%') THEN 2  <!-- 开头匹配排其次 -->
+        ELSE 3  <!-- 包含匹配排最后 -->
+        END,
+        LENGTH(name) ASC,  <!-- 名称越短匹配度越高 -->
+        followers_count DESC  <!-- 按关注人数降序 -->
+    </select>
+
 
 
 </mapper>

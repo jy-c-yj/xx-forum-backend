@@ -4,7 +4,9 @@ package com.cyj.xx.mapper;
 
 import com.cyj.xx.dvo.HotSectionsDVO;
 import com.cyj.xx.dvo.MySectionDVO;
+import com.cyj.xx.dvo.SearchPost;
 import com.cyj.xx.entity.Section;
+import com.github.pagehelper.Page;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 
@@ -28,4 +30,6 @@ public interface SectionsMapper {
 
 
     void UpdateSection(Section section);
+
+    Page<SearchPost> searchPost(String keyword);
 }

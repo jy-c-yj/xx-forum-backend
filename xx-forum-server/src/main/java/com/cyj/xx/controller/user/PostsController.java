@@ -8,11 +8,13 @@ import com.cyj.xx.result.PageResult;
 import com.cyj.xx.result.Result;
 import com.cyj.xx.service.Impl.PostsServiceImpl;
 import com.cyj.xx.service.Impl.RepliesServiceImpl;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/user")
+@Slf4j
 public class PostsController {
 
     @Autowired
@@ -154,6 +156,22 @@ public class PostsController {
 
 
         return postsService.pushPost(postPushDTO);
+    }
+
+    /**
+     * 搜索相关帖子
+     * @param keyword
+     * @param page
+     * @param size
+     * @return
+     */
+    @GetMapping("/post/search")
+    public Result<PageResult> searchPost(@RequestParam("q") String keyword,
+                                     @RequestParam(value = "pageNum", defaultValue = "0") int page,
+                                     @RequestParam(value = "pageSize", defaultValue = "10") int size){
+
+        return postsService.searchPost(keyword,page,size);
+
     }
 
 

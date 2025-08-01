@@ -3,14 +3,17 @@ package com.cyj.xx.service.Impl;
 import com.cyj.xx.context.BaseContext;
 import com.cyj.xx.dvo.HotSectionsDVO;
 import com.cyj.xx.dvo.MySectionDVO;
+import com.cyj.xx.dvo.SearchPost;
 import com.cyj.xx.entity.Section;
 import com.cyj.xx.entity.admin;
 import com.cyj.xx.mapper.SectionFollowsMapper;
 import com.cyj.xx.mapper.SectionsMapper;
+import com.cyj.xx.result.PageResult;
 import com.cyj.xx.result.Result;
 import com.cyj.xx.service.SectionsService;
 import com.cyj.xx.service.adminService;
 import com.cyj.xx.utils.RedisUtil;
+import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -206,6 +209,21 @@ public class SectionsServiceImpl implements SectionsService {
             return Result.success(true);
         }catch (Exception e){
             return Result.error("出现未知错误");
+        }
+    }
+
+    @Override
+    public Result<PageResult> searchPost(String keyword, int page, int size) {
+        try{
+            PageHelper.startPage(page,size);
+            Page<SearchPost> p =  sectionsMapper.searchPost(keyword);
+            PageResult pageResult = new PageResult();
+            pageResult.setTotal(p.getTotal());
+            pageResult.setRecords(p.getResult());
+            return Result.success(pageResult);
+
+        }catch (Exception e){
+            return Result.error("查询失败");
         }
     }
 }

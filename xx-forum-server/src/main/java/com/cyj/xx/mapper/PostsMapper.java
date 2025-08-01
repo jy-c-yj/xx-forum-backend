@@ -3,10 +3,7 @@ package com.cyj.xx.mapper;
 
 import com.cyj.xx.dto.PostsPageDTO;
 import com.cyj.xx.dto.SecPostsPageDTO;
-import com.cyj.xx.dvo.MyInformationMainPostsDVO;
-import com.cyj.xx.dvo.MyInformationPostDVO;
-import com.cyj.xx.dvo.PostDetailDVO;
-import com.cyj.xx.dvo.PostsHomeDVO;
+import com.cyj.xx.dvo.*;
 import com.cyj.xx.entity.Posts;
 import com.github.pagehelper.Page;
 import org.apache.ibatis.annotations.Mapper;
@@ -31,4 +28,8 @@ public interface PostsMapper {
     Page<MyInformationMainPostsDVO> getPostByUserId(Long userId);
 
     Page<MyInformationPostDVO> getMyPostsByUserId(Long userId);
+
+    Page<MyInformationMyCollectionDVO> getMyCollectionByUserId(Long userId);
+
+    Page<SearchPost> searchPost(String keyword);
 }
