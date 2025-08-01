@@ -35,7 +35,7 @@ public class PostsController {
     }
 
     /**
-     * 分页查询
+     * 分页查询板块内帖子
      * @return
      */
     @GetMapping("/Secposts")
@@ -174,6 +174,22 @@ public class PostsController {
 
     }
 
+    /**
+     * 搜索板块内相关帖子
+     * @param keyword
+     * @param page
+     * @param size
+     * @return
+     */
+    @GetMapping("/post/searchInSec")
+    public Result<PageResult> searchPostInSec(@RequestParam("q") String keyword,
+                                         @RequestParam(value = "pageNum", defaultValue = "0") int page,
+                                         @RequestParam(value = "pageSize", defaultValue = "10") int size,
+                                          int id){
+
+        return postsService.searchPostInsec(keyword,page,size,id);
+
+    }
 
 
 }

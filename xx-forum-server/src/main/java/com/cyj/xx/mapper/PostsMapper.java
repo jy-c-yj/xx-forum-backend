@@ -21,7 +21,9 @@ public interface PostsMapper {
     @Select("SELECT * FROM posts where id = #{postId}")
     Posts getPostById(Long postId);
 
-    Page<PostsHomeDVO> Secpage(SecPostsPageDTO secPostsPageDTO);
+    Page<PostsSectionDVO> Secpage_t(SecPostsPageDTO secPostsPageDTO);
+
+    Page<PostsSectionDVO> Secpage_v(SecPostsPageDTO secPostsPageDTO);
 
     void addNewPost(Posts post);
 
@@ -32,4 +34,6 @@ public interface PostsMapper {
     Page<MyInformationMyCollectionDVO> getMyCollectionByUserId(Long userId);
 
     Page<SearchPost> searchPost(String keyword);
+
+    Page<SearchPost> searchPostInSec(String keyword , int sectionId);
 }

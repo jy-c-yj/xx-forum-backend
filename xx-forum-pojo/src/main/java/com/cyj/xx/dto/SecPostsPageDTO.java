@@ -8,5 +8,6 @@ import lombok.Data;
 public class SecPostsPageDTO {
     private int page;
     private int pageSize;
+    private Integer sortType = null;
     private Long sectionId = null;
 }

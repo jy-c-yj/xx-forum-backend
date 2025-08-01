@@ -5,10 +5,7 @@ import com.cyj.xx.dto.PostPushDTO;
 import com.cyj.xx.dto.PostsPageDTO;
 import com.cyj.xx.dto.SecPostsPageDTO;
 import com.cyj.xx.dto.UpdataPostLikeDTO;
-import com.cyj.xx.dvo.PostDetailDVO;
-import com.cyj.xx.dvo.PostsHomeDVO;
-import com.cyj.xx.dvo.SearchPost;
-import com.cyj.xx.dvo.UpdataPostLikedDVO;
+import com.cyj.xx.dvo.*;
 import com.cyj.xx.entity.*;
 import com.cyj.xx.mapper.*;
 import com.cyj.xx.result.PageResult;
@@ -88,35 +85,73 @@ public class PostsServiceImpl implements postsService {
     @Override
 
     public PageResult Secpage(SecPostsPageDTO secPostsPageDTO) {
-        String key1 = "Posts:Sec:"+secPostsPageDTO.getSectionId()+":page:"+secPostsPageDTO.getPage();
+        String key1_t = "Posts:Sec:"+secPostsPageDTO.getSectionId()+":page_t:"+secPostsPageDTO.getPage();//时间排序
+        String key1_v = "Posts:Sec:"+secPostsPageDTO.getSectionId()+":page_v:"+secPostsPageDTO.getPage();//热度/观看数排序
         String key2 = "Posts:Sec:"+secPostsPageDTO.getSectionId()+":postId:";
         try{
-            if(redisUtil.exists(key1)){
-                log.info("数据已被缓存，开始查询 ==== 》 {}",key1);
-                List<PostsHomeDVO> ll =  redisUtil.GetAll(key1);
-                PageResult pageResult = PageResult.builder()
-                        .records(ll)
-                        .total(ll.size())
-                        .build();
-                return pageResult;
+            if(secPostsPageDTO.getSortType() == 1){
+                if(redisUtil.exists(key1_t)){
+                    log.info("数据已被缓存，开始查询 ==== 》 {}",key1_t);
+                    List<PostsSectionDVO> ll =  redisUtil.GetAll(key1_t);
+                    PageResult pageResult = PageResult.builder()
+                            .records(ll)
+                            .total(ll.size())
+                            .build();
+                    return pageResult;
+                }
             }
-            PageHelper.startPage(secPostsPageDTO.getPage(),secPostsPageDTO.getPageSize());
-            Page<PostsHomeDVO> page =  postsMapper.Secpage(secPostsPageDTO);
-            PageResult pageResult = PageResult.builder()
-                    .total(page.getTotal())
-                    .records(page.getResult())
-                    .build();
-            log.info("未查询到缓存，执行缓存操作");
-
-            //缓存单条post
-            for(PostsHomeDVO post : page.getResult()){
-                Posts posts = postsMapper.getPostById(post.getId());
-                String key = key2+posts.getId();
-                redisUtil.set(key,posts);
+            if(secPostsPageDTO.getSortType() == 2){
+                if(redisUtil.exists(key1_v)){
+                    log.info("数据已被缓存，开始查询 ==== 》 {}",key1_v);
+                    List<PostsSectionDVO> ll =  redisUtil.GetAll(key1_v);
+                    PageResult pageResult = PageResult.builder()
+                            .records(ll)
+                            .total(ll.size())
+                            .build();
+                    return pageResult;
+                }
             }
-            //缓存分页结果
-            redisUtil.pushAll(key1,page.getResult(),30, TimeUnit.SECONDS);
 
+
+            PageResult pageResult = new PageResult();
+            //按时间排序
+            if (secPostsPageDTO.getSortType() == 1){
+                PageHelper.startPage(secPostsPageDTO.getPage(),secPostsPageDTO.getPageSize());
+                Page<PostsSectionDVO> page =  postsMapper.Secpage_t(secPostsPageDTO);
+                pageResult.setRecords(page.getResult());
+                pageResult.setTotal(page.getTotal());
+                log.info("未查询到缓存，执行缓存操作");
+
+                //缓存单条post
+                for(PostsSectionDVO post : page.getResult()){
+                    Posts posts = postsMapper.getPostById(post.getId());
+                    String key = key2+posts.getId();
+                    redisUtil.set(key,posts);
+                }
+                //缓存分页结果
+                redisUtil.pushAll(key1_t,page.getResult(),30, TimeUnit.SECONDS);
+
+
+            }
+            //按热度排序
+            if(secPostsPageDTO.getSortType() == 2){
+                PageHelper.startPage(secPostsPageDTO.getPage(),secPostsPageDTO.getPageSize());
+                Page<PostsSectionDVO> page =  postsMapper.Secpage_v(secPostsPageDTO);
+                pageResult.setRecords(page.getResult());
+                pageResult.setTotal(page.getTotal());
+                log.info("未查询到缓存，执行缓存操作");
+
+                //缓存单条post
+                for(PostsSectionDVO post : page.getResult()){
+                    Posts posts = postsMapper.getPostById(post.getId());
+                    String key = key2+posts.getId();
+                    redisUtil.set(key,posts);
+                }
+                //缓存分页结果
+                redisUtil.pushAll(key1_v,page.getResult(),30, TimeUnit.SECONDS);
+
+
+            }
             return pageResult;
         }catch (Exception e){
             throw  new RuntimeException(e.getMessage());
@@ -564,6 +599,21 @@ public class PostsServiceImpl implements postsService {
         try{
             PageHelper.startPage(page,size);
             Page<SearchPost> p =  postsMapper.searchPost(keyword);
+            PageResult pageResult = new PageResult();
+            pageResult.setTotal(p.getTotal());
+            pageResult.setRecords(p.getResult());
+            return Result.success(pageResult);
+
+        }catch (Exception e){
+            return Result.error("查询失败");
+        }
+    }
+
+    @Override
+    public Result<PageResult> searchPostInsec(String keyword, int page, int size ,int sectionId) {
+        try{
+            PageHelper.startPage(page,size);
+            Page<SearchPost> p =  postsMapper.searchPostInSec(keyword,sectionId);
             PageResult pageResult = new PageResult();
             pageResult.setTotal(p.getTotal());
             pageResult.setRecords(p.getResult());

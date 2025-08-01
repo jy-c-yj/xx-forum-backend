@@ -31,4 +31,6 @@ public interface postsService {
     Result<Posts> pushPost(PostPushDTO postPushDTO);
 
     Result<PageResult> searchPost(String keyword, int page, int size);
+
+    Result<PageResult> searchPostInsec(String keyword, int page, int size, int sectionId);
 }
