@@ -11,7 +11,7 @@ import com.cyj.xx.result.Result;
 public interface repliesService {
 
 
-    PageResult getReply(RepliesPageDTO repliesPageDTO);
+
 
     Result addNewReply(NewReplyDTO newReplyDTO);
 
@@ -21,4 +21,7 @@ public interface repliesService {
     Result<Boolean> doToggleLike(Long replyId);
 
     Result<Boolean> untoggleLike(Long replyId);
+
+
+    PageResult getReply(RepliesPageDTO repliesPageDTO);
 }

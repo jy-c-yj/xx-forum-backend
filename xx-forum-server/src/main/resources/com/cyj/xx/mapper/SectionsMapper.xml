@@ -42,7 +42,7 @@
         WHERE id = #{id}
     </update>
 
-    <select id="searchPost" resultType="com.cyj.xx.dvo.SearchPost">
+    <select id="searchSection" resultType="com.cyj.xx.dvo.SearchSectionDVO">
         SELECT
         id,
         name,

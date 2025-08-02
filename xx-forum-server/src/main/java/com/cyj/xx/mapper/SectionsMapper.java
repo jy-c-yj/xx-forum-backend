@@ -4,9 +4,11 @@ package com.cyj.xx.mapper;
 
 import com.cyj.xx.dvo.HotSectionsDVO;
 import com.cyj.xx.dvo.MySectionDVO;
-import com.cyj.xx.dvo.SearchPost;
+import com.cyj.xx.dvo.SearchPostDVO;
+import com.cyj.xx.dvo.SearchSectionDVO;
 import com.cyj.xx.entity.Section;
 import com.github.pagehelper.Page;
+import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Select;
 
@@ -31,5 +33,8 @@ public interface SectionsMapper {
 
     void UpdateSection(Section section);
 
-    Page<SearchPost> searchPost(String keyword);
+    Page<SearchSectionDVO> searchSection(String keyword);
+
+    @Insert("INSERT INTO sections( name, description, background_image,  admin_id,  image) values (#{name}, #{description}, #{backgroundImage},  #{adminId},  #{image})")
+    void addNewSection(Section newSection);
 }

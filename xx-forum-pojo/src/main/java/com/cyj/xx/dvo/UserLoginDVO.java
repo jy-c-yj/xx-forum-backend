@@ -22,7 +22,7 @@ public class UserLoginDVO implements Serializable {
     private String desc;
     private String gender;
     private String token;
-    private String postCount;
+    private Integer postCount;
     private Integer likeCount;
 
 

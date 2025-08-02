@@ -4,7 +4,6 @@ import com.cyj.xx.context.BaseContext;
 import com.cyj.xx.dto.PostPushDTO;
 import com.cyj.xx.dto.PostsPageDTO;
 import com.cyj.xx.dto.SecPostsPageDTO;
-import com.cyj.xx.dto.UpdataPostLikeDTO;
 import com.cyj.xx.dvo.*;
 import com.cyj.xx.entity.*;
 import com.cyj.xx.mapper.*;
@@ -14,9 +13,7 @@ import com.cyj.xx.service.postsService;
 import com.cyj.xx.utils.RedisUtil;
 import com.github.pagehelper.Page;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.cache.annotation.Caching;
 import org.springframework.stereotype.Service;
 import com.github.pagehelper.PageHelper;
 import org.springframework.transaction.annotation.Transactional;
@@ -598,7 +595,7 @@ public class PostsServiceImpl implements postsService {
     public Result<PageResult> searchPost(String keyword, int page, int size) {
         try{
             PageHelper.startPage(page,size);
-            Page<SearchPost> p =  postsMapper.searchPost(keyword);
+            Page<SearchPostDVO> p =  postsMapper.searchPost(keyword);
             PageResult pageResult = new PageResult();
             pageResult.setTotal(p.getTotal());
             pageResult.setRecords(p.getResult());
@@ -613,7 +610,7 @@ public class PostsServiceImpl implements postsService {
     public Result<PageResult> searchPostInsec(String keyword, int page, int size ,int sectionId) {
         try{
             PageHelper.startPage(page,size);
-            Page<SearchPost> p =  postsMapper.searchPostInSec(keyword,sectionId);
+            Page<SearchPostDVO> p =  postsMapper.searchPostInSec(keyword,sectionId);
             PageResult pageResult = new PageResult();
             pageResult.setTotal(p.getTotal());
             pageResult.setRecords(p.getResult());

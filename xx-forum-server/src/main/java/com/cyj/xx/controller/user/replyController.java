@@ -20,12 +20,20 @@ public class replyController {
     @Autowired
     private repliesService replyService;
 
+    /**
+     * 获取回复
+     * @param repliesPageDTO
+     * @return
+     */
     @GetMapping("/reply")
     public Result reply(RepliesPageDTO repliesPageDTO) {
         PageResult pageResult= replyService.getReply(repliesPageDTO);
-
+        if(pageResult == null){
+            return Result.error("请求错误");
+        }
         return Result.success(pageResult);
     }
+
     @PostMapping("/newReply")
     public Result newReply(@RequestBody NewReplyDTO newReplyDTO) {
 

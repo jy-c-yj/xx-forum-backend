@@ -9,7 +9,7 @@ import lombok.NoArgsConstructor;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class SearchSection {
+public class SearchSectionDVO {
     private Long id;
     private String name;
     private String description;

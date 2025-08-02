@@ -2,6 +2,7 @@ package com.cyj.xx.controller.user;
 
 
 import com.cyj.xx.context.BaseContext;
+import com.cyj.xx.dto.CreateSectionDTO;
 import com.cyj.xx.dvo.HotSectionsDVO;
 import com.cyj.xx.dvo.MySectionDVO;
 import com.cyj.xx.entity.Section;
@@ -93,8 +94,17 @@ public class SectionsController {
                                          @RequestParam(value = "pageNum", defaultValue = "0") int page,
                                          @RequestParam(value = "pageSize", defaultValue = "10") int size){
 
-        return sectionsService.searchPost(keyword,page,size);
+        return sectionsService.searchSection(keyword,page,size);
 
+    }
+
+    @PostMapping("/createSection")
+    public Result<Boolean> createSection(@RequestBody CreateSectionDTO createSectionDTO) {
+        Long userId = BaseContext.getCurrentId();
+        if(userId == null){
+            return Result.error("请登录");
+        }
+        return sectionsService.createSection(userId,createSectionDTO);
     }
 
 }

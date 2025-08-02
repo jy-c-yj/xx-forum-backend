@@ -235,7 +235,7 @@ public class UserServiceImpl implements userService {
                     .phone(map.get("phone").toString())
                     .email(map.get("email").toString())
                     .likeCount((Integer) map.get("likeCount"))
-                    .postCount((String) map.get("postCount"))
+                    .postCount((Integer) map.get("postCount"))
                     .desc(map.get("desc").toString())
                     .gender(map.get("gender").toString())
                     .build();

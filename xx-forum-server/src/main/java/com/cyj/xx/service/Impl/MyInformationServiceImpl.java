@@ -80,7 +80,7 @@ public class MyInformationServiceImpl implements myInformationService {
                 userInformationDVO.setUsername(user.get("username").toString());
                 userInformationDVO.setId(id);
                 userInformationDVO.setLikeCount((Integer) user.get("likeCount"));
-                userInformationDVO.setPostCount(user.get("postCount").toString());
+                userInformationDVO.setPostCount((Integer) user.get("postCount"));
                 userInformationDVO.setImage(user.get("file").toString());
 
                 return Result.success(userInformationDVO);

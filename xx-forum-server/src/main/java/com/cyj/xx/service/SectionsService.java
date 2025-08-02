@@ -1,5 +1,6 @@
 package com.cyj.xx.service;
 
+import com.cyj.xx.dto.CreateSectionDTO;
 import com.cyj.xx.dvo.HotSectionsDVO;
 import com.cyj.xx.dvo.MySectionDVO;
 import com.cyj.xx.entity.Section;
@@ -24,5 +25,7 @@ public interface SectionsService {
 
     Result<Boolean> unfollowSec(Long sectionId);
 
-    Result<PageResult> searchPost(String keyword, int page, int size);
+    Result<PageResult> searchSection(String keyword, int page, int size);
+
+    Result<Boolean> createSection(Long userId, CreateSectionDTO createSectionDTO);
 }

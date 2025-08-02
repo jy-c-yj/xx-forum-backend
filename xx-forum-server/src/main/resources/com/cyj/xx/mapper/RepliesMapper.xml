@@ -2,7 +2,47 @@
 <!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
 <mapper namespace="com.cyj.xx.mapper.RepliesMapper">
-    <select id="selectReliesbyPostId" resultType="com.cyj.xx.dvo.ReplyDVO">
+    <select id="selectReliesbyPostId_hot" resultType="com.cyj.xx.dvo.ReplyDVO">
+        -- 分页查询父回复
+        SELECT
+            r.id,
+            r.content,
+            r.user_id AS userId,
+            r.post_id AS postId,
+            r.like_count AS likeCount,
+            r.created_time AS createdTime,
+            r.parent_id AS parentId,
+            u.username,
+            u.image
+        FROM replies r
+                 INNER JOIN users u ON r.user_id = u.id
+        WHERE r.post_id = #{postid}
+          AND r.status = 0
+          AND r.parent_id = 0
+        ORDER BY r.like_count DESC, r.created_time DESC
+    </select>
+
+    <select id="selectReliesbyPostId_Proper" resultType="com.cyj.xx.dvo.ReplyDVO">
+        -- 分页查询父回复
+        SELECT
+            r.id,
+            r.content,
+            r.user_id AS userId,
+            r.post_id AS postId,
+            r.like_count AS likeCount,
+            r.created_time AS createdTime,
+            r.parent_id AS parentId,
+            u.username,
+            u.image
+        FROM replies r
+                 INNER JOIN users u ON r.user_id = u.id
+        WHERE r.post_id = #{postid}
+          AND r.status = 0
+          AND r.parent_id = 0
+        ORDER BY r.created_time ASC
+    </select>
+
+    <select id="selectReliesbyPostId_Reverse" resultType="com.cyj.xx.dvo.ReplyDVO">
         -- 分页查询父回复
         SELECT
             r.id,

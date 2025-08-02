@@ -47,7 +47,7 @@ public class User {
 
     private String desc ="这个人很懒，什么都没写";
 
-    private String postCount;
+    private Integer postCount;
 
     private Integer likeCount;
 

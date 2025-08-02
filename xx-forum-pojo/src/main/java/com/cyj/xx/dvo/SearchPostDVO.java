@@ -12,7 +12,7 @@ import java.time.LocalDateTime;
 @AllArgsConstructor
 @NoArgsConstructor
 @Builder
-public class SearchPost {
+public class SearchPostDVO {
     private Long id;
     private String title;
     private String content;

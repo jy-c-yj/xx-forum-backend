@@ -177,7 +177,7 @@
         ORDER BY
             c.created_time DESC  -- 按收藏时间倒序
     </select>
-    <select id="searchPost" resultType="com.cyj.xx.dvo.SearchPost">
+    <select id="searchPost" resultType="com.cyj.xx.dvo.SearchPostDVO">
         SELECT
         p.id,
         p.title,
@@ -198,7 +198,7 @@
         p.created_time DESC <!-- 最后按时间倒序 -->
     </select>
 
-    <select id="searchPostInSec" resultType="com.cyj.xx.dvo.SearchPost">
+    <select id="searchPostInSec" resultType="com.cyj.xx.dvo.SearchPostDVO">
         SELECT
         p.id,
         p.title,

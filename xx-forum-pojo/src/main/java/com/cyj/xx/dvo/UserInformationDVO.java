@@ -21,7 +21,7 @@ public class UserInformationDVO {
 
     private String image = "default_avatar.png";
 
-    private String postCount;
+    private Integer postCount;
 
     private Integer likeCount;
 

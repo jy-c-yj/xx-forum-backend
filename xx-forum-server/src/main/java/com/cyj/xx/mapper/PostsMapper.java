@@ -33,7 +33,7 @@ public interface PostsMapper {
 
     Page<MyInformationMyCollectionDVO> getMyCollectionByUserId(Long userId);
 
-    Page<SearchPost> searchPost(String keyword);
+    Page<SearchPostDVO> searchPost(String keyword);
 
-    Page<SearchPost> searchPostInSec(String keyword , int sectionId);
+    Page<SearchPostDVO> searchPostInSec(String keyword , int sectionId);
 }

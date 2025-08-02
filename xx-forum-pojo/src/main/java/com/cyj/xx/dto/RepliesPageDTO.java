@@ -9,4 +9,5 @@ public class RepliesPageDTO {
     private int page;
     private int pageSize;
     private int postid;
+    private int type = 1;
 }

@@ -17,7 +17,10 @@ import java.util.List;
 public interface RepliesMapper {
 
 
-    Page<ReplyDVO> selectReliesbyPostId(Integer postid);
+    Page<ReplyDVO> selectReliesbyPostId_hot(Integer postid);
+    Page<ReplyDVO> selectReliesbyPostId_Proper(Integer postid);
+    Page<ReplyDVO> selectReliesbyPostId_Reverse(Integer postid);
+
 
     void addReply(Replies replies);
 
@@ -34,4 +37,5 @@ public interface RepliesMapper {
     List<ReplyDVO> selectChildReply(Long replyid);
 
     Page<MyInformationReplyDVO> getMyRepliesById(Long userId);
+
 }

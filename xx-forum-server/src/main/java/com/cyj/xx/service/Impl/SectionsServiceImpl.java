@@ -1,17 +1,17 @@
 package com.cyj.xx.service.Impl;
 
 import com.cyj.xx.context.BaseContext;
+import com.cyj.xx.dto.CreateSectionDTO;
 import com.cyj.xx.dvo.HotSectionsDVO;
 import com.cyj.xx.dvo.MySectionDVO;
-import com.cyj.xx.dvo.SearchPost;
+import com.cyj.xx.dvo.SearchPostDVO;
+import com.cyj.xx.dvo.SearchSectionDVO;
 import com.cyj.xx.entity.Section;
-import com.cyj.xx.entity.admin;
 import com.cyj.xx.mapper.SectionFollowsMapper;
 import com.cyj.xx.mapper.SectionsMapper;
 import com.cyj.xx.result.PageResult;
 import com.cyj.xx.result.Result;
 import com.cyj.xx.service.SectionsService;
-import com.cyj.xx.service.adminService;
 import com.cyj.xx.utils.RedisUtil;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
@@ -22,7 +22,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
@@ -213,10 +212,10 @@ public class SectionsServiceImpl implements SectionsService {
     }
 
     @Override
-    public Result<PageResult> searchPost(String keyword, int page, int size) {
+    public Result<PageResult> searchSection(String keyword, int page, int size) {
         try{
             PageHelper.startPage(page,size);
-            Page<SearchPost> p =  sectionsMapper.searchPost(keyword);
+            Page<SearchSectionDVO> p =  sectionsMapper.searchSection(keyword);
             PageResult pageResult = new PageResult();
             pageResult.setTotal(p.getTotal());
             pageResult.setRecords(p.getResult());
@@ -224,6 +223,22 @@ public class SectionsServiceImpl implements SectionsService {
 
         }catch (Exception e){
             return Result.error("查询失败");
+        }
+    }
+
+    @Override
+    public Result<Boolean> createSection(Long userId, CreateSectionDTO createSectionDTO) {
+        Section newSection = new Section();
+        try{
+            newSection.setName(createSectionDTO.getName());
+            newSection.setImage(createSectionDTO.getImage());
+            newSection.setDescription(createSectionDTO.getDescription());
+            newSection.setBackgroundImage(createSectionDTO.getBackgroundImage());
+            newSection.setAdminId(BaseContext.getCurrentId());
+            sectionsMapper.addNewSection(newSection);
+            return Result.success(true);
+        }catch (Exception e){
+            return Result.error(e.getMessage());
         }
     }
 }

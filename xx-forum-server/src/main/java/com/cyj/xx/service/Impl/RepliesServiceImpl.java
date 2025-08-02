@@ -50,30 +50,77 @@ public class RepliesServiceImpl implements repliesService {
     @Override
     public PageResult getReply(RepliesPageDTO repliesPageDTO) {
         Long id = Long.parseLong("-1");
-        String key1 = "replies:PostId:"+repliesPageDTO.getPostid()+":page:"+repliesPageDTO.getPage();
+        int type = repliesPageDTO.getType();
+        String key1 = "replies:PostId:"+repliesPageDTO.getPostid()+":page:hot:"+repliesPageDTO.getPage();
+        String key1_2 = "replies:PostId:"+repliesPageDTO.getPostid()+":page:Proper:"+repliesPageDTO.getPage();
+        String key1_3 = "replies:PostId:"+repliesPageDTO.getPostid()+":page:Reverse:"+repliesPageDTO.getPage();
         String key2 = "replies:PostId:"+repliesPageDTO.getPostid()+":replyId:";
         try{
             //如果缓存存在
-            if(redisUtil.exists(key1)){
-                log.info("查询到分页缓存");
-                List<ReplyDVO> replies = redisUtil.GetAll(key1);
-                PageResult pageResult = PageResult.builder()
-                        .total(replies.size())
-                        .records(replies)
-                        .build();
-                log.info("检查点赞数据是否以被缓存");
-                if(!redisUtil.exists("likes:isLikes")){
-                    log.info("不存在，将点赞表缓存");
-                    List<user_reply_likes> ll = userReplyLikesMapper.getAll();
-                    for(user_reply_likes like : ll){
-                        String key_ = "likes:reply:"+ like.getReplyId() +":user:"+ like.getUserId();
-                        redisUtil.set(key_,like);
+            if(type == 1){//热门查询
+                if(redisUtil.exists(key1)){
+                    log.info("查询到分页缓存");
+                    List<ReplyDVO> replies = redisUtil.GetAll(key1);
+                    PageResult pageResult = PageResult.builder()
+                            .total(replies.size())
+                            .records(replies)
+                            .build();
+                    log.info("检查点赞数据是否以被缓存");
+                    if(!redisUtil.exists("likes:isLikes")){
+                        log.info("不存在，将点赞表缓存");
+                        List<user_reply_likes> ll = userReplyLikesMapper.getAll();
+                        for(user_reply_likes like : ll){
+                            String key_ = "likes:reply:"+ like.getReplyId() +":user:"+ like.getUserId();
+                            redisUtil.set(key_,like);
+                        }
+                        redisUtil.set("likes:reply:isLikes","true");
                     }
-                    redisUtil.set("likes:reply:isLikes","true");
+                    return pageResult;
                 }
-                return pageResult;
-
             }
+            if(type == 2){//正序查询
+                if(redisUtil.exists(key1_2)){
+                    log.info("查询到分页缓存");
+                    List<ReplyDVO> replies = redisUtil.GetAll(key1_2);
+                    PageResult pageResult = PageResult.builder()
+                            .total(replies.size())
+                            .records(replies)
+                            .build();
+                    log.info("检查点赞数据是否以被缓存");
+                    if(!redisUtil.exists("likes:isLikes")){
+                        log.info("不存在，将点赞表缓存");
+                        List<user_reply_likes> ll = userReplyLikesMapper.getAll();
+                        for(user_reply_likes like : ll){
+                            String key_ = "likes:reply:"+ like.getReplyId() +":user:"+ like.getUserId();
+                            redisUtil.set(key_,like);
+                        }
+                        redisUtil.set("likes:reply:isLikes","true");
+                    }
+                    return pageResult;
+                }
+            }
+            if(type == 3){//倒序查询
+                if(redisUtil.exists(key1_3)){
+                    log.info("查询到分页缓存");
+                    List<ReplyDVO> replies = redisUtil.GetAll(key1_3);
+                    PageResult pageResult = PageResult.builder()
+                            .total(replies.size())
+                            .records(replies)
+                            .build();
+                    log.info("检查点赞数据是否以被缓存");
+                    if(!redisUtil.exists("likes:isLikes")){
+                        log.info("不存在，将点赞表缓存");
+                        List<user_reply_likes> ll = userReplyLikesMapper.getAll();
+                        for(user_reply_likes like : ll){
+                            String key_ = "likes:reply:"+ like.getReplyId() +":user:"+ like.getUserId();
+                            redisUtil.set(key_,like);
+                        }
+                        redisUtil.set("likes:reply:isLikes","true");
+                    }
+                    return pageResult;
+                }
+            }
+
             //如果缓存不存在
             log.info("开始查询replies,user表,当前用户user ===》{}",BaseContext.getCurrentId());
 
@@ -82,8 +129,20 @@ public class RepliesServiceImpl implements repliesService {
             }
 
             log.info("开始查询父回复");
-            PageHelper.startPage(repliesPageDTO.getPage(), repliesPageDTO.getPageSize());
-            Page<ReplyDVO> page = repliesMapper.selectReliesbyPostId(repliesPageDTO.getPostid());
+            Page<ReplyDVO> page = new Page<>();
+            if(type == 1){
+                PageHelper.startPage(repliesPageDTO.getPage(), repliesPageDTO.getPageSize());
+                page = repliesMapper.selectReliesbyPostId_hot(repliesPageDTO.getPostid());
+            }
+            else if(type == 2){
+                PageHelper.startPage(repliesPageDTO.getPage(), repliesPageDTO.getPageSize());
+                page = repliesMapper.selectReliesbyPostId_Proper(repliesPageDTO.getPostid());
+            }
+            else if(type == 3){
+                PageHelper.startPage(repliesPageDTO.getPage(), repliesPageDTO.getPageSize());
+                page = repliesMapper.selectReliesbyPostId_Reverse(repliesPageDTO.getPostid());
+            }
+
 
             //父回复集合
             List<ReplyDVO> replies = page.getResult();
@@ -102,7 +161,15 @@ public class RepliesServiceImpl implements repliesService {
 
 
             //缓存分页数据
-            redisUtil.pushAll(key1, replies,10, TimeUnit.MINUTES);
+            if(type == 1){
+                redisUtil.pushAll(key1, replies,10, TimeUnit.MINUTES);
+            }
+            else if(type == 2){
+                redisUtil.pushAll(key1_2, replies,10, TimeUnit.MINUTES);
+            }
+            else if(type == 3){
+                redisUtil.pushAll(key1_3, replies,10, TimeUnit.MINUTES);
+            }
             //缓存单条数据
             for (ReplyDVO replyDVO : replies) {
                 String k = key2+replyDVO.getId();
@@ -120,14 +187,9 @@ public class RepliesServiceImpl implements repliesService {
             return pageResult;
         }catch (Exception e){
             log.info("数据查询异常");
-            Result.error("数据异常");
-            e.printStackTrace();
+            return null;
+
         }
-
-
-
-
-        return null;
     }
 
 

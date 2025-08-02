@@ -16,7 +16,7 @@ public class UserPersonalDVO {
     @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime createtime;
     private Integer likeCount;
-    private String postCount;
+    private Integer postCount;
     private String image;
     private String gender;
     private String phone;
