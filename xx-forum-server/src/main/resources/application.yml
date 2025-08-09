@@ -59,6 +59,10 @@ logging:
   level:
     com.cyj.xx.mapper: trace  # 改为 TRACE 级别
     java.sql: debug
+    org.springframework.messaging.simp: TRACE
+    org.springframework.web.socket: TRACE
+    org.springframework.web.socket.handler: TRACE
+
 
 
 cyj:
@@ -66,6 +70,5 @@ cyj:
     secret: "jycyj"
     exptime: 7200000
     token: "token"
-
 
 

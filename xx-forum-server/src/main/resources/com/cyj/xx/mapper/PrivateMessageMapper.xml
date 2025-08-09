@@ -1,0 +1,119 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.cyj.xx.mapper.PrivateMessageMapper">
+
+    <select id="getContact" resultType="com.cyj.xx.dvo.PrivateContactDVO">
+        SELECT
+            u.id AS senderId,
+            u.username AS name,
+            COALESCE(u.image, 'default_avatar.png') AS avatar,
+            CASE
+                WHEN pm.image IS NOT NULL THEN '[图片]'
+                ELSE LEFT(pm.message, 50)
+                END AS lastMessage,
+            DATE_FORMAT(pm.create_time, '%Y-%m-%d %H:%i:%s') AS lastMessageTime,
+            COALESCE(unread.unread_count, 0) AS unreadCount  -- 添加未读消息数
+        FROM (
+                 SELECT
+                     CASE
+                         WHEN sender_id = #{userId} THEN receiver_id
+                         ELSE sender_id
+                         END AS contact_id,
+                     MAX(id) AS max_msg_id
+                 FROM private_messages
+                 WHERE
+                     (sender_id = #{userId} AND is_deleted_sender = 0)
+                    OR (receiver_id = #{userId} AND is_deleted_receiver = 0)
+                 GROUP BY contact_id
+             ) AS last_msgs
+                 INNER JOIN private_messages pm ON last_msgs.max_msg_id = pm.id
+                 INNER JOIN users u ON last_msgs.contact_id = u.id
+                 LEFT JOIN (  -- 添加未读消息统计子查询
+            SELECT
+                sender_id,
+                COUNT(*) AS unread_count
+            FROM private_messages
+            WHERE
+                receiver_id = #{userId}
+              AND is_read = 0
+              AND is_deleted_receiver = 0
+            GROUP BY sender_id
+        ) AS unread ON unread.sender_id = u.id
+        ORDER BY pm.create_time DESC
+    </select>
+
+    <select id="getMessage" resultType="com.cyj.xx.dvo.PrivateMessageDVO">
+        SELECT
+            id,
+            sender_id AS senderId,
+            receiver_id AS receiverId,
+            CASE
+                WHEN image IS NOT NULL THEN '[图片]'
+                ELSE message
+                END AS message,
+            create_time AS createTime,
+            CASE
+                WHEN sender_id = #{userId} THEN 1
+                ELSE 2
+                END AS type
+        FROM private_messages
+        WHERE
+            (
+                (sender_id = #{userId} AND receiver_id = #{contactId} AND is_deleted_sender = 0)
+                    OR
+                (sender_id = #{contactId} AND receiver_id = #{userId} AND is_deleted_receiver = 0)
+                )
+        ORDER BY create_time ASC, id ASC
+    </select>
+    <insert id="addMessage">
+        insert into private_messages( sender_id, receiver_id, message,  create_time)
+        values (#{senderId},#{receiverId},#{message},#{createTime})
+    </insert>
+    <update id="updatePrivateMessage" parameterType="map">
+        UPDATE private_messages
+        <set>
+            <if test="message != null and message != ''">
+                message = #{message},
+            </if>
+            <if test="image != null">
+                image = #{image},
+            </if>
+            <if test="isRead != null">
+                is_read = #{isRead},
+            </if>
+            <if test="isDeletedSender != null">
+                is_deleted_sender = #{isDeletedSender},
+            </if>
+            <if test="isDeletedReceiver != null">
+                is_deleted_receiver = #{isDeletedReceiver},
+            </if>
+        </set>
+        WHERE 1=1
+        <choose>
+            <!-- 场景1：根据消息ID更新 -->
+            <when test="id != null">
+                AND id = #{id}
+            </when>
+            <!-- 场景2：标记某个联系人的所有消息为已读 -->
+            <when test="senderId != null and receiverId != null and isRead != null">
+                AND sender_id = #{senderId}
+                AND receiver_id = #{receiverId}
+                AND is_read = 0 <!-- 只更新未读消息 -->
+            </when>
+            <!-- 场景3：用户删除与某个联系人的所有对话 -->
+            <when test="senderId != null and receiverId != null and (isDeletedSender != null or isDeletedReceiver != null)">
+                AND (
+                (sender_id = #{senderId} AND receiver_id = #{receiverId})
+                OR (sender_id = #{receiverId} AND receiver_id = #{senderId}
+                )
+            </when>
+            <!-- 场景4：用户清空所有私信 -->
+            <when test="userId != null and (isDeletedSender != null or isDeletedReceiver != null)">
+                AND (sender_id = #{userId} OR receiver_id = #{userId})
+            </when>
+        </choose>
+    </update>
+
+
+</mapper>

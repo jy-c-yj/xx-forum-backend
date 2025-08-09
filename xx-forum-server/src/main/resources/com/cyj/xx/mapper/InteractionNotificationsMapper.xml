@@ -1,0 +1,62 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.cyj.xx.mapper.InteractionNotificationsMapper">
+
+    <select id="getSystemNotificationsByreceiverId" resultType="com.cyj.xx.dto.NotificationDTO">
+        SELECT
+            n.id,
+            n.type,
+            n.sender_id AS senderId,
+            u_sender.username AS senderName,
+            n.receiver_id AS receiverId,
+            n.post_id AS postId,
+            p.title,
+            n.reply_id AS replyId,
+            r.content,
+            n.is_read AS isRead,
+            n.create_time AS createTime
+        FROM interaction_notifications n
+                 INNER JOIN users u_sender ON n.sender_id = u_sender.id
+                 INNER JOIN posts p ON n.post_id = p.id
+                 LEFT JOIN replies r ON n.reply_id = r.id
+        WHERE n.receiver_id = #{receiverId}
+          AND n.is_deleted = 0
+        ORDER BY n.create_time DESC
+    </select>
+
+    <update id="updateNotificationById" parameterType="com.cyj.xx.entity.InteractionNotification">
+        UPDATE interaction_notifications
+        <set>
+            <if test="type != null">
+                type = #{type},
+            </if>
+            <if test="senderId != null">
+                sender_id = #{senderId},
+            </if>
+            <if test="receiverId != null">
+                receiver_id = #{receiverId},
+            </if>
+            <if test="postId != null">
+                post_id = #{postId},
+            </if>
+            <if test="replyId != null">
+                reply_id = #{replyId},
+            </if>
+            <if test="isRead != null">
+                is_read = #{isRead},
+            </if>
+            <if test="isDeleted != null">
+                is_deleted = #{isDeleted},
+            </if>
+            <if test="readTime != null">
+                read_time = #{readTime},
+            </if>
+        </set>
+        WHERE id = #{id}
+        AND is_deleted = 0
+    </update>
+
+
+
+</mapper>
