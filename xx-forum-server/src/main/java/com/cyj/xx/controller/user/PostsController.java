@@ -2,6 +2,7 @@ package com.cyj.xx.controller.user;
 
 
 import com.cyj.xx.dto.*;
+import com.cyj.xx.dvo.PostDetailDVO;
 import com.cyj.xx.dvo.ReplyDVO;
 import com.cyj.xx.entity.Posts;
 import com.cyj.xx.result.PageResult;
@@ -54,7 +55,7 @@ public class PostsController {
      * @return
      */
     @GetMapping("/postdetail")
-    public Result postdetail(Long postid) {
+    public Result<PostDetailDVO> postdetail(Long postid) {
 
 
         return postsService.postdetail(postid);
@@ -189,6 +190,12 @@ public class PostsController {
 
         return postsService.searchPostInsec(keyword,page,size,id);
 
+    }
+
+    @PostMapping("/post/confirmBanPost")
+    public Result<Boolean> confirmBanPost(@RequestBody ConfirmBanPostDTO confirmBanPostDTO) {
+
+        return postsService.confirmBanPost(confirmBanPostDTO);
     }
 
 

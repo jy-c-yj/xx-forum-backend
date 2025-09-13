@@ -33,7 +33,7 @@ public class WebMvcConfiguration extends WebMvcConfigurationSupport {
                 .excludePathPatterns("/user/sections/hot")
                 .excludePathPatterns("/user/sections/sectionDetail")
                 .excludePathPatterns("/user/checklike")
-                .excludePathPatterns("/user/likePost/*")
+//                .excludePathPatterns("/user/likePost/*")
                 .excludePathPatterns("/user//meanUser")
                 .excludePathPatterns("/user/post/search")
                 .excludePathPatterns("/user/sections/section/search")

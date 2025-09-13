@@ -1,14 +1,17 @@
 package com.cyj.xx.service.Impl;
 
+import com.cyj.xx.Enum.OperationType;
+import com.cyj.xx.Enum.TargetType;
 import com.cyj.xx.context.BaseContext;
+import com.cyj.xx.dto.ConfirmBanUserDTO;
 import com.cyj.xx.dto.CreateSectionDTO;
+import com.cyj.xx.dto.UpdataSectionDTO;
 import com.cyj.xx.dvo.HotSectionsDVO;
-import com.cyj.xx.dvo.MySectionDVO;
-import com.cyj.xx.dvo.SearchPostDVO;
+import com.cyj.xx.dvo.ManageShowSectionDVO;
+import com.cyj.xx.dvo.MyFollowSectionDVO;
 import com.cyj.xx.dvo.SearchSectionDVO;
-import com.cyj.xx.entity.Section;
-import com.cyj.xx.mapper.SectionFollowsMapper;
-import com.cyj.xx.mapper.SectionsMapper;
+import com.cyj.xx.entity.*;
+import com.cyj.xx.mapper.*;
 import com.cyj.xx.result.PageResult;
 import com.cyj.xx.result.Result;
 import com.cyj.xx.service.SectionsService;
@@ -20,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
@@ -37,7 +41,16 @@ public class SectionsServiceImpl implements SectionsService {
     private SectionFollowsMapper sectionFollowsMapper;
 
     @Autowired
+    private UserSignInMapper userSignInMapper;
+
+    @Autowired
     private RedisUtil redisUtil;
+
+    @Autowired
+    private BannedUserMapper bannedUserMapper;
+
+    @Autowired
+    ModeratorOperationLogMapper moderatorOperationLogMapper;
 
 
     /**
@@ -78,7 +91,7 @@ public class SectionsServiceImpl implements SectionsService {
      * @return
      */
     @Override
-    public Result<List<MySectionDVO>> mySection(Long id) {
+    public Result<List<MyFollowSectionDVO>> mySection(Long id) {
 
         if(id == null){
             return Result.error("用户数据错误");
@@ -89,20 +102,20 @@ public class SectionsServiceImpl implements SectionsService {
             String key = "Sec:followSection:UserId:"+id+":SecId:";
             Set set =  redisUtil.keys(key+"*");
             List<String> l = new ArrayList<>(set);
-            List<MySectionDVO> ll = new ArrayList<>();
+            List<MyFollowSectionDVO> ll = new ArrayList<>();
             if(!l.isEmpty()){
                 for(String str:l){
-                ll.add((MySectionDVO)redisUtil.get(str));
+                ll.add((MyFollowSectionDVO)redisUtil.get(str));
                 }
                 return Result.success(ll);
             }
 
             log.info("缓存数据不存在");
-            List<MySectionDVO> mySec =  sectionsMapper.getMySection(id);
+            List<MyFollowSectionDVO> mySec =  sectionsMapper.getFollowMySection(id);
 
 
             log.info("未查询到缓存，执行缓存操作");
-            for(MySectionDVO mySecDVO:mySec){
+            for(MyFollowSectionDVO mySecDVO:mySec){
                 redisUtil.set(key+mySecDVO.getId(), mySecDVO);
             }
 
@@ -159,13 +172,13 @@ public class SectionsServiceImpl implements SectionsService {
 
     @Override
     @Transactional
-    public Result<MySectionDVO> followSec(Long sectionId) {
+    public Result<MyFollowSectionDVO> followSec(Long sectionId) {
         Long userId = BaseContext.getCurrentId();
         String key = "Sec:followSection:UserId:"+userId+":SecId:"+sectionId;
         try {
 
             if (redisUtil.exists(key)) {
-                return Result.error("以关注此板块");
+                return Result.error("已关注此板块");
             }
 
             //更新关注表
@@ -175,9 +188,28 @@ public class SectionsServiceImpl implements SectionsService {
             sec.setFollowersCount(sec.getFollowersCount() + 1);
             sectionsMapper.UpdateSection(sec);
 
+            //更新签到表
+            //检查签到信息是否存在
+            UserSignIn u = userSignInMapper.getUserSignIn(sectionId, userId);
+            if(u != null){
+                u.setIsDeleted(0);
+                userSignInMapper.UpdateUserSignIn(u);
+            }
+            else {
+                UserSignIn userSignIn = new UserSignIn();
+                userSignIn.setSectionId(sectionId);
+                userSignIn.setUserId(userId);
+                userSignIn.setStatus(false);
+                userSignIn.setContinuousDays(0);
+                userSignIn.setCreatedAt(LocalDateTime.now());
+                userSignIn.setUpdatedAt(LocalDateTime.now());
+                userSignInMapper.addNewUserSignIn(userSignIn);
+            }
+
+
 
             //添加缓存
-            MySectionDVO mySecDVO = new MySectionDVO();
+            MyFollowSectionDVO mySecDVO = new MyFollowSectionDVO();
             mySecDVO.setId(sectionId);
             mySecDVO.setImage(sec.getImage());
             mySecDVO.setName(sec.getName());
@@ -201,6 +233,8 @@ public class SectionsServiceImpl implements SectionsService {
             }
             //删除关注表
             sectionFollowsMapper.unfollowSec(userId, sectionId);
+            //删除签到表
+            userSignInMapper.UnUserSignIn(userId,sectionId);
             //更新板块关注数
             Section sec = sectionsMapper.getSectionById(sectionId);
             sec.setFollowersCount(sec.getFollowersCount() - 1);
@@ -239,6 +273,103 @@ public class SectionsServiceImpl implements SectionsService {
             return Result.success(true);
         }catch (Exception e){
             return Result.error(e.getMessage());
+        }
+    }
+
+    @Override
+    public ManageShowSectionDVO getSection(Long sectionId, Long userId) {
+        try{
+
+           Section section = sectionsMapper.getSectionById(sectionId);
+
+           ManageShowSectionDVO msc = ManageShowSectionDVO.builder()
+                   .name(section.getName())
+                   .image(section.getImage())
+                   .description(section.getDescription())
+                   .backgroundImage(section.getBackgroundImage())
+                   .createdTime(section.getCreatedTime())
+                   .followersCount(section.getFollowersCount())
+                   .id(section.getId())
+                   .postCount(section.getPostCount())
+                   .build();
+
+           return msc;
+
+        }catch (Exception e){
+            throw new RuntimeException("数据查询错误");
+        }
+
+    }
+
+    @Override
+    public Result<Boolean> UpdataSection(UpdataSectionDTO updataSectionDTO) {
+        try {
+            Section section = new Section();
+            section.setId(updataSectionDTO.getId());
+            section.setImage(updataSectionDTO.getImage());
+            section.setDescription(updataSectionDTO.getDescription());
+            section.setBackgroundImage(updataSectionDTO.getBackgroundImage());
+            sectionsMapper.UpdateSection(section);
+            return Result.success(true);
+
+        }catch (Exception e){
+            return Result.error("修改失败");
+        }
+    }
+
+    /**
+     * 检查版主身份
+     * @param sectionId
+     * @param userId
+     * @return
+     */
+    @Override
+    public Result<Boolean> isModerator(Long sectionId, Long userId) {
+        log.info("开始检查版主身份== sectionId->{} == userId->{}",sectionId,userId);
+        try {
+            Section section =  sectionsMapper.getSectionById(sectionId);
+            if(section.getAdminId().equals(userId)){
+                return Result.success(true);
+            }else {
+                return Result.success(false);
+            }
+
+        }catch (Exception e){
+
+            log.info("检查版主身份失败== sectionId->{} == userId->{}",sectionId,userId);
+
+            return Result.error("检查版主身份失败");
+        }
+    }
+
+    @Override
+    @Transactional
+    public Result<Boolean> confirmBanUser(ConfirmBanUserDTO confirmBanUserDTO) {
+        ModeratorOperationLog moderatorOperationLog = new ModeratorOperationLog();
+        BannedUser bannedUser = new BannedUser();
+        try {
+
+
+            //插入一条用户封禁信息
+            bannedUser.setBanReason(confirmBanUserDTO.getReason());
+            bannedUser.setSectionId(confirmBanUserDTO.getSectionId() );
+            bannedUser.setUserId(confirmBanUserDTO.getUserId());
+            bannedUserMapper.insert(bannedUser);
+
+            //插入一条日志信息 操作类型：封禁 目标类型：帖子
+            moderatorOperationLog.setOperationType(OperationType.BAN);
+            moderatorOperationLog.setTargetType(TargetType.USER);
+            moderatorOperationLog.setReason(confirmBanUserDTO.getReason());
+            moderatorOperationLog.setCreatedAt(LocalDateTime.now());
+            moderatorOperationLog.setSectionId(confirmBanUserDTO.getSectionId());
+            moderatorOperationLog.setTargetId(confirmBanUserDTO.getUserId());
+            moderatorOperationLog.setModeratorId(BaseContext.getCurrentId());
+            moderatorOperationLogMapper.insert(moderatorOperationLog);
+
+
+            return Result.success(true);
+        }catch (Exception e){
+            return Result.error("封禁失败（数据库出错）");
         }
     }
 }

@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.cyj.xx.mapper.UserSignInMapper">
+    <insert id="addNewUserSignIn"  useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO user_sign_in ( user_id, section_id, status, continuous_days, created_at, updated_at)
+        values (#{userId}, #{sectionId}, #{status}, #{continuousDays}, #{createdAt}, #{updatedAt})
+    </insert>
+
+    <delete id="UnUserSignIn">
+        UPDATE user_sign_in set is_deleted = 1 where section_id = #{sectionId} and user_id = #{userId}
+    </delete>
+    <delete id="deleteUserSignIn">
+        delete from user_sign_in where section_id = #{sectionId} and user_id = #{userId}
+    </delete>
+    <update id="UpdateUserSignIn" parameterType="com.cyj.xx.entity.UserSignIn" >
+        UPDATE user_sign_in
+        <set>
+
+            <if test="status != null">
+                status = #{status},
+            </if>
+            <if test="continuousDays != null">
+                continuous_days = #{continuousDays},
+            </if>
+            <if test="lastSignDate != null">
+                last_sign_date = #{lastSignDate},
+            </if>
+            <if test="experience != null">
+                experience = #{experience},
+            </if>
+            updated_at = NOW()
+        </set>
+        WHERE id = #{id}
+    </update>
+
+    <update id="BatchSignInStatus">
+        UPDATE user_sign_in
+        SET
+            status =
+                CASE
+                    WHEN status = 1 THEN 0
+                    ELSE status
+                    END,
+            continuous_days =
+                CASE
+                    WHEN status = 0 THEN 0
+                    ELSE continuous_days
+                    END
+    </update>
+
+</mapper>
+

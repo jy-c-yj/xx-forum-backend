@@ -1,9 +1,6 @@
 package com.cyj.xx.mapper;
 
 
-import com.cyj.xx.dvo.HotSectionsDVO;
-import com.cyj.xx.dvo.MySectionDVO;
-import com.cyj.xx.entity.Section;
 import com.cyj.xx.entity.sections_follows;
 import org.apache.ibatis.annotations.Delete;
 import org.apache.ibatis.annotations.Insert;

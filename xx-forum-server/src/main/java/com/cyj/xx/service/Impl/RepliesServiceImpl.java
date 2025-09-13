@@ -2,17 +2,12 @@ package com.cyj.xx.service.Impl;
 
 import com.cyj.xx.context.BaseContext;
 import com.cyj.xx.dto.NewReplyDTO;
+import com.cyj.xx.dto.NotificationDTO;
 import com.cyj.xx.dto.RepliesPageDTO;
 import com.cyj.xx.dto.UpdataReplyLikeDTO;
 import com.cyj.xx.dvo.ReplyDVO;
-import com.cyj.xx.entity.Posts;
-import com.cyj.xx.entity.Replies;
-import com.cyj.xx.entity.User;
-import com.cyj.xx.entity.user_reply_likes;
-import com.cyj.xx.mapper.PostsMapper;
-import com.cyj.xx.mapper.RepliesMapper;
-import com.cyj.xx.mapper.UserMapper;
-import com.cyj.xx.mapper.UserReplyLikesMapper;
+import com.cyj.xx.entity.*;
+import com.cyj.xx.mapper.*;
 import com.cyj.xx.result.PageResult;
 import com.cyj.xx.result.Result;
 import com.cyj.xx.service.repliesService;
@@ -23,6 +18,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.ibatis.annotations.Insert;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -46,6 +42,11 @@ public class RepliesServiceImpl implements repliesService {
     PostsMapper postsMapper;
     @Autowired
     private RedisUtil redisUtil;
+    @Autowired
+    private InteractionNotificationsMapper interactionNotificationsMapper;
+
+    @Autowired
+    private SimpMessagingTemplate brokerMessagingTemplate;
 
     @Override
     public PageResult getReply(RepliesPageDTO repliesPageDTO) {
@@ -246,6 +247,34 @@ public class RepliesServiceImpl implements repliesService {
             BeanUtils.copyProperties(replyDVO,replies);
             updateRedis("replies:PostId:"+newReplyDTO.getPostId()+":replyId:"+replies.getId(),replies);
 
+            //发送系统消息
+            String kkk = "user_Session:";
+            InteractionNotification interactionNotification = new InteractionNotification();
+            interactionNotification.setSenderId(Integer.parseInt(BaseContext.getCurrentId().toString()) );
+            interactionNotification.setPostId(post.getId());
+
+            if(newReplyDTO.getParentId().intValue() != 0){
+                interactionNotification.setType(InteractionNotification.NotificationType.COMMENT_REPLY.getCode());
+                interactionNotification.setReplyId(replies.getId());
+                Long ReceiverId =  repliesMapper.getRepliesById(newReplyDTO.getParentId() ).getUserId();
+                interactionNotification.setReceiverId(Integer.parseInt(ReceiverId.toString()));
+
+            }else {
+                interactionNotification.setType(InteractionNotification.NotificationType.POST_REPLY.getCode());
+                interactionNotification.setReceiverId(Integer.parseInt(post.getUserId().toString()));
+
+            }
+            interactionNotificationsMapper.addNotifications(interactionNotification);
+
+            kkk = kkk + interactionNotification.getReceiverId();
+            if(redisUtil.exists(kkk)) {
+                NotificationDTO notificationDTO = interactionNotificationsMapper.getSystemNotificationsById(interactionNotification.getId());
+                brokerMessagingTemplate.convertAndSendToUser(
+                        interactionNotification.getReceiverId().toString(),
+                        "/queue/messages",
+                        notificationDTO
+                );
+            }
             return Result.success(replyDVO);
         }catch (Exception e ){
             e.printStackTrace();
@@ -287,7 +316,7 @@ public class RepliesServiceImpl implements repliesService {
      */
     @Override
     @Transactional
-    public Result doToggleLike(Long replyId) {
+    public Result<InteractionNotification> doToggleLike(Long replyId,Long postId) {
 
         Long userId = BaseContext.getCurrentId();
         String key = "likes:reply:"+replyId+":user:"+userId;
@@ -315,10 +344,18 @@ public class RepliesServiceImpl implements repliesService {
             //更新缓存
             redisUtil.set(key,"true");
 
-            return Result.success(true);
+            //发送点赞信息
+            InteractionNotification interactionNotification = new InteractionNotification();
+            interactionNotification.setReplyId(replyId);
+            interactionNotification.setReceiverId(Integer.parseInt(user.getId().toString()) );
+            interactionNotification.setSenderId(Integer.parseInt(userId.toString()) );
+            interactionNotification.setType(InteractionNotification.NotificationType.REPLY_LIKE.getCode());
+            interactionNotification.setPostId(postId);
+            interactionNotificationsMapper.addNotifications(interactionNotification);
+            return Result.success(interactionNotification);
 
         }catch (Exception e){
-            return Result.error("点赞失败");
+            return Result.error("点赞失败了");
         }
     }
 

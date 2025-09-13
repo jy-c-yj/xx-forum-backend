@@ -2,16 +2,17 @@ package com.cyj.xx.controller.user;
 
 
 import com.cyj.xx.context.BaseContext;
+import com.cyj.xx.dto.ConfirmBanPostDTO;
+import com.cyj.xx.dto.ConfirmBanUserDTO;
 import com.cyj.xx.dto.CreateSectionDTO;
+import com.cyj.xx.dto.UpdataSectionDTO;
 import com.cyj.xx.dvo.HotSectionsDVO;
-import com.cyj.xx.dvo.MySectionDVO;
+import com.cyj.xx.dvo.MyFollowSectionDVO;
 import com.cyj.xx.entity.Section;
 import com.cyj.xx.result.PageResult;
 import com.cyj.xx.result.Result;
 import com.cyj.xx.service.SectionsService;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.ibatis.annotations.Delete;
-import org.apache.ibatis.annotations.Select;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
@@ -33,7 +34,7 @@ public class SectionsController {
     }
 
     @GetMapping("/mySection")
-    public Result<List<MySectionDVO>> mySection(Long id) {
+    public Result<List<MyFollowSectionDVO>> mySection(Long id) {
 
 
         return sectionsService.mySection(id);
@@ -63,7 +64,7 @@ public class SectionsController {
      * @return
      */
     @PostMapping("/followSec/{SectionId}")
-    public Result<MySectionDVO> followSec(@PathVariable Long SectionId) {
+    public Result<MyFollowSectionDVO> followSec(@PathVariable Long SectionId) {
 
 
 
@@ -106,5 +107,25 @@ public class SectionsController {
         }
         return sectionsService.createSection(userId,createSectionDTO);
     }
+
+    @PostMapping("/UpdataSection")
+    public Result<Boolean> updataSection(@RequestBody UpdataSectionDTO updataSectionDTO) {
+        Long userId = BaseContext.getCurrentId();
+        return sectionsService.UpdataSection(updataSectionDTO);
+    }
+
+    @GetMapping("/isModerator")
+    public Result<Boolean> isModerator(Long sectionId) {
+        Long userId = BaseContext.getCurrentId();
+        return sectionsService.isModerator(sectionId,userId);
+    }
+
+    @PostMapping("/confirmBanUser")
+    public Result<Boolean> confirmBanUser(@RequestBody ConfirmBanUserDTO confirmBanUserDTO) {
+
+        return sectionsService.confirmBanUser(confirmBanUserDTO);
+    }
+
+
 
 }

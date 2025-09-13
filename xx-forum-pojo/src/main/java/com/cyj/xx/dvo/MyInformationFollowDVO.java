@@ -16,6 +16,6 @@ public class MyInformationFollowDVO {
     private Long id;                // 板块id
     private String sectionName;     //板块名字
     private Integer grade = 1;             //等级
-    private Long xp = Long.parseLong("0");                //经验
+    private Integer xp = 0;                //经验
 
 }

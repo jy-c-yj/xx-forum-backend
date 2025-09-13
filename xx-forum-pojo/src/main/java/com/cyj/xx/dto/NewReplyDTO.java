@@ -14,5 +14,5 @@ import java.util.PrimitiveIterator;
 public class NewReplyDTO {
     private String content;
     private Long postId;
-    private Long parentId;
+    private Long parentId = null;
 }

@@ -33,4 +33,6 @@ public interface postsService {
     Result<PageResult> searchPost(String keyword, int page, int size);
 
     Result<PageResult> searchPostInsec(String keyword, int page, int size, int sectionId);
+
+    Result<Boolean> confirmBanPost(ConfirmBanPostDTO confirmBanPostDTO);
 }

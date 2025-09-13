@@ -1,15 +1,14 @@
 package com.cyj.xx.controller.user;
 
 
+
 import com.cyj.xx.context.BaseContext;
-import com.cyj.xx.dto.UserChangePwd;
-import com.cyj.xx.dto.UserEnrollDTO;
-import com.cyj.xx.dto.UserLoginDTO;
-import com.cyj.xx.dto.UserReviseDTO;
+import com.cyj.xx.dto.*;
 import com.cyj.xx.dvo.*;
 import com.cyj.xx.result.PageResult;
 import com.cyj.xx.result.Result;
 import com.cyj.xx.service.Impl.MyInformationServiceImpl;
+import com.cyj.xx.service.Impl.SectionsServiceImpl;
 import com.cyj.xx.service.Impl.UserServiceImpl;
 import com.cyj.xx.utils.RedisUtil;
 import lombok.extern.slf4j.Slf4j;
@@ -29,6 +28,8 @@ public class myInformationController {
     MyInformationServiceImpl myInformationServiceImpl;
     @Autowired
     RedisUtil redisUtil;
+    @Autowired
+    private SectionsServiceImpl sectionsServiceImpl;
 
     /**
      * 个人信息展示
@@ -111,10 +112,23 @@ public class myInformationController {
      */
     @GetMapping("/myCollection")
     public Result<PageResult> myColletion(int pageNum,int pageSize) {
+
         if(BaseContext.getCurrentId() == null){
             return Result.error("登陆已过期");
         }
         Long userId = BaseContext.getCurrentId();
         return myInformationServiceImpl.getMyCollection(userId ,pageNum,pageSize);
     }
+
+    @GetMapping("/mySections")
+    public Result<List<MySectionsDVO>> mySection() {
+        Long userId = BaseContext.getCurrentId();
+        return myInformationServiceImpl.getMySections(userId);
+    }
+    @GetMapping("/manage/getSection")
+    public Result<ManageShowSectionDVO> manageSection(Long sectionId) {
+        Long userId = BaseContext.getCurrentId();
+        return Result.success(sectionsServiceImpl.getSection(sectionId,userId)) ;
+    }
+
 }

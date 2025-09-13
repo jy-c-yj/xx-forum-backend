@@ -2,36 +2,22 @@ package com.cyj.xx.service.Impl;
 
 
 import com.cyj.xx.context.BaseContext;
-import com.cyj.xx.dto.UserChangePwd;
-import com.cyj.xx.dto.UserEnrollDTO;
-import com.cyj.xx.dto.UserLoginDTO;
-import com.cyj.xx.dto.UserReviseDTO;
 import com.cyj.xx.dvo.*;
 import com.cyj.xx.entity.Section;
 import com.cyj.xx.entity.User;
-import com.cyj.xx.entity.sections_follows;
-import com.cyj.xx.exception.PasswordErrorException;
+import com.cyj.xx.entity.UserSignIn;
 import com.cyj.xx.mapper.*;
-import com.cyj.xx.properties.JwtProperties;
 import com.cyj.xx.result.PageResult;
 import com.cyj.xx.result.Result;
 import com.cyj.xx.service.myInformationService;
-import com.cyj.xx.service.userService;
-import com.cyj.xx.utils.AliOssUtil;
-import com.cyj.xx.utils.JwtUtil;
 import com.cyj.xx.utils.RedisUtil;
 import com.github.pagehelper.Page;
 import com.github.pagehelper.PageHelper;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import org.springframework.util.DigestUtils;
 
-import java.io.IOException;
-import java.time.LocalDateTime;
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
@@ -48,6 +34,9 @@ public class MyInformationServiceImpl implements myInformationService {
 
     @Autowired
     SectionFollowsMapper sectionFollowsMapper;
+
+    @Autowired
+    UserSignInMapper userSignInMapper;
 
     @Autowired
     RepliesMapper repliesMapper;
@@ -107,9 +96,9 @@ public class MyInformationServiceImpl implements myInformationService {
     @Override
     public Result<List<MyInformationMainSecsDVO>> getSections(Long userId) {
         try{
-            List<MySectionDVO> ll = sectionsMapper.getMySection(userId);
+            List<MyFollowSectionDVO> ll = sectionsMapper.getFollowMySection(userId);
             List<MyInformationMainSecsDVO> lll = new ArrayList<>();
-            for(MySectionDVO s : ll){
+            for(MyFollowSectionDVO s : ll){
                 MyInformationMainSecsDVO mps = new MyInformationMainSecsDVO();
                 mps.setId(s.getId());
                 mps.setSectionName(s.getName());
@@ -161,22 +150,33 @@ public class MyInformationServiceImpl implements myInformationService {
         try{
             Set<String> s = redisUtil.keys(key+"*");
             List<MyInformationFollowDVO> ll = new ArrayList<>();
-            if(!s.isEmpty()){
-                for(String str : s){
-                   MySectionDVO my =  (MySectionDVO) redisUtil.get(str);
-                   MyInformationFollowDVO mps = new MyInformationFollowDVO();
-                   mps.setId(my.getId());
-                   mps.setSectionName(my.getName());
-                   ll.add(mps);
-                }
-            }
-            //查找数据库
-            List<sections_follows> ls = sectionFollowsMapper.findMySections(userId);
-            for(sections_follows sf : ls){
-                Section sec = sectionsMapper.getSectionById(sf.getSectionId());
+//            if(!s.isEmpty()){
+//                for(String str : s){
+//                   MySectionDVO my =  (MySectionDVO) redisUtil.get(str);
+//                   MyInformationFollowDVO mps = new MyInformationFollowDVO();
+//                   mps.setId(my.getId());
+//                   mps.setSectionName(my.getName());
+//                   ll.add(mps);
+//                }
+//            }
+//            //查找数据库
+//            List<sections_follows> ls = sectionFollowsMapper.findMySections(userId);
+//            for(sections_follows sf : ls){
+//                Section sec = sectionsMapper.getSectionById(sf.getSectionId());
+//                MyInformationFollowDVO mps = new MyInformationFollowDVO();
+//                mps.setId(sec.getId());
+//                mps.setSectionName(sec.getName());
+//            }
+            //查询签到表
+            List<UserSignIn> ls = userSignInMapper.getUserSignInByUserId(userId);
+            for(UserSignIn u : ls){
                 MyInformationFollowDVO mps = new MyInformationFollowDVO();
-                mps.setId(sec.getId());
+                mps.setId(u.getSectionId());
+                Section sec = sectionsMapper.getSectionById(u.getSectionId());
                 mps.setSectionName(sec.getName());
+                mps.setXp(u.getExperience());
+                ll.add(mps);
+
             }
             return Result.success(ll);
 
@@ -251,6 +251,35 @@ public class MyInformationServiceImpl implements myInformationService {
         } catch (Exception e) {
             log.error("获取用户帖子失败");
             return Result.error("获取帖子失败: " + e.getMessage());
+        }
+    }
+
+    /**
+     * 获取我创造的板块
+     * @param userId
+     * @return
+     */
+    @Override
+    public Result<List<MySectionsDVO>> getMySections(Long userId) {
+
+        List<MySectionsDVO> ldvo = new ArrayList<>();
+
+        try{
+
+            List<Section> lsec =  sectionsMapper.getSection(userId);
+
+            for(Section sec : lsec){
+                MySectionsDVO mps = new MySectionsDVO();
+                mps.setId(sec.getId());
+                mps.setSectionName(sec.getName());
+                ldvo.add(mps);
+            }
+
+
+            return Result.success(ldvo);
+
+        }catch (Exception e) {
+            return Result.error("查询数据库失败");
         }
     }
 }

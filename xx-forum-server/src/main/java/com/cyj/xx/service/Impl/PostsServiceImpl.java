@@ -1,6 +1,9 @@
 package com.cyj.xx.service.Impl;
 
+import com.cyj.xx.Enum.OperationType;
+import com.cyj.xx.Enum.TargetType;
 import com.cyj.xx.context.BaseContext;
+import com.cyj.xx.dto.ConfirmBanPostDTO;
 import com.cyj.xx.dto.PostPushDTO;
 import com.cyj.xx.dto.PostsPageDTO;
 import com.cyj.xx.dto.SecPostsPageDTO;
@@ -41,6 +44,12 @@ public class PostsServiceImpl implements postsService {
     SectionsMapper sectionsMapper;
     @Autowired
     private RedisUtil redisUtil;
+
+    @Autowired
+    ModeratorOperationLogMapper moderatorOperationLogMapper;
+
+    @Autowired
+    BannedPostMapper bannedPostMapper;
 
     /**
      * 分页查询热门帖子
@@ -162,7 +171,7 @@ public class PostsServiceImpl implements postsService {
      * @return
      */
     @Override
-    public Result postdetail(Long postid) {
+    public Result<PostDetailDVO> postdetail(Long postid) {
 
         String key = "Posts:postdetail:"+postid;
         try{
@@ -266,9 +275,6 @@ public class PostsServiceImpl implements postsService {
         Long userId = BaseContext.getCurrentId();
         String key = "likes:post:"+postId+":user:"+userId;
         try{
-            if(redisUtil.exists(key)){
-                return Result.error("已点赞");
-            }
             //更新帖子点赞表
             userPostLikesMapper.insert(userId,postId);
             //更新帖子点赞数
@@ -276,7 +282,7 @@ public class PostsServiceImpl implements postsService {
             posts.setLikeCount(posts.getLikeCount()+1);
             postsMapper.UpdataPost(posts);
             //更新帖子发帖人获赞数
-            User user = userMapper.getUserById(userId);
+            User user = userMapper.getUserById(posts.getUserId());
             user.setLikeCount(user.getLikeCount()+1);
             userMapper.updateUser(user);
 
@@ -547,17 +553,22 @@ public class PostsServiceImpl implements postsService {
 
             //更新板块表帖子数
             Section sec = sectionsMapper.getSectionById(Long.parseLong(Integer.toString(postPushDTO.getSectionId())) );
-            sec.setPostCount(posts.getCollectCount()+1);
-            postsMapper.UpdataPost(posts);
+            sec.setPostCount(sec.getPostCount()+1);
+            sectionsMapper.UpdateSection(sec);
             //更新用户发帖数
             User user = userMapper.getUserById(BaseContext.getCurrentId());
             user.setPostCount(user.getPostCount()+1);
             userMapper.updateUser(user);
 
-            //更新板块详情缓存
+            //更新板块帖子详情缓存
             String key1 ="Posts:Sec:"+ postPushDTO.getSectionId()+":postId:"+posts.getId();
             if(redisUtil.exists(key1)){
                 redisUtil.set(key1,posts);
+            }
+            //更新板块帖子详情缓存
+            String key2 ="Sec:sectionDetail:SectionId:"+sec.getId();
+            if(redisUtil.exists(key2)){
+                redisUtil.set(key2,sec);
             }
             //删除板块帖子分页显示缓存
             delPostPage("Posts:Sec:"+ postPushDTO .getSectionId()+":page:*");
@@ -619,5 +630,41 @@ public class PostsServiceImpl implements postsService {
         }catch (Exception e){
             return Result.error("查询失败");
         }
+    }
+
+    @Override
+    @Transactional
+    public Result<Boolean> confirmBanPost(ConfirmBanPostDTO confirmBanPostDTO) {
+        ModeratorOperationLog moderatorOperationLog = new ModeratorOperationLog();
+        BannedPost bannedPost = new BannedPost();
+        try {
+
+            //修改post封禁状态(0=正常,1=删除)
+            Posts posts = postsMapper.getPostById(confirmBanPostDTO.getPostId());
+            posts.setStatus(1);
+            postsMapper.UpdataPost(posts);
+
+            //插入一条帖子封禁信息
+            bannedPost.setBanReason(confirmBanPostDTO.getReason());
+            bannedPost.setSectionId(Long.parseLong(posts.getSectionId().toString()) );
+            bannedPost.setPostId(confirmBanPostDTO.getPostId());
+            bannedPostMapper.insert(bannedPost);
+
+            //插入一条日志信息 操作类型：封禁 目标类型：帖子
+            moderatorOperationLog.setOperationType(OperationType.BAN);
+            moderatorOperationLog.setTargetType(TargetType.POST);
+            moderatorOperationLog.setReason(confirmBanPostDTO.getReason());
+            moderatorOperationLog.setCreatedAt(LocalDateTime.now());
+            moderatorOperationLog.setSectionId(Long.parseLong(posts.getSectionId().toString()));
+            moderatorOperationLog.setTargetId(confirmBanPostDTO.getPostId());
+            moderatorOperationLog.setModeratorId(BaseContext.getCurrentId());
+            moderatorOperationLogMapper.insert(moderatorOperationLog);
+
+
+            return Result.success(true);
+        }catch (Exception e){
+            return Result.error("封禁失败（数据库出错）");
+        }
+
     }
 }

@@ -19,13 +19,13 @@ public class InteractionNotification {
         POST_REPLY(3),   // 回复帖子
         COMMENT_REPLY(4);// 回复评论
 
-        private final int code;
+        private final byte code;
 
         NotificationType(int code) {
-            this.code = code;
+            this.code = (byte) code;
         }
 
-        public int getCode() {
+        public byte getCode() {
             return code;
         }
     }

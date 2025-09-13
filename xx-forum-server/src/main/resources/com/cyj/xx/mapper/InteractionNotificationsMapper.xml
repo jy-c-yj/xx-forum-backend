@@ -24,6 +24,27 @@
           AND n.is_deleted = 0
         ORDER BY n.create_time DESC
     </select>
+    <select id="getSystemNotificationsById" resultType="com.cyj.xx.dto.NotificationDTO">
+        SELECT
+            n.id,
+            n.type,
+            n.sender_id AS senderId,
+            u_sender.username AS senderName,
+            n.receiver_id AS receiverId,
+            n.post_id AS postId,
+            p.title,
+            n.reply_id AS replyId,
+            r.content,
+            n.is_read AS isRead,
+            n.create_time AS createTime
+        FROM interaction_notifications n
+                 INNER JOIN users u_sender ON n.sender_id = u_sender.id
+                 INNER JOIN posts p ON n.post_id = p.id
+                 LEFT JOIN replies r ON n.reply_id = r.id
+        WHERE n.id = #{id}
+          AND n.is_deleted = 0
+
+    </select>
 
     <update id="updateNotificationById" parameterType="com.cyj.xx.entity.InteractionNotification">
         UPDATE interaction_notifications
@@ -56,6 +77,13 @@
         WHERE id = #{id}
         AND is_deleted = 0
     </update>
+
+    <insert id="addNotifications" useGeneratedKeys="true" keyProperty="id">
+        INSERT INTO interaction_notifications
+            (type, sender_id, receiver_id, post_id, reply_id)
+        VALUES(#{type}, #{senderId}, #{receiverId}, #{postId}, #{replyId})
+
+    </insert>
 
 
 

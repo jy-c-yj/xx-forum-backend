@@ -12,5 +12,9 @@ public interface InteractionNotificationsMapper {
 
     List<NotificationDTO> getSystemNotificationsByreceiverId(Long receiverId);
 
+    NotificationDTO getSystemNotificationsById(Long id);
+
     void updateNotificationById(InteractionNotification interactionNotification);
+
+    void addNotifications(InteractionNotification interactionNotification);
 }
