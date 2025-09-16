@@ -7,4 +7,19 @@
         values (#{postId}, #{sectionId}, #{banReason})
     </insert>
 
+    <select id="selectBanPostLog" resultType="com.cyj.xx.dvo.BanPostLogDVO">
+        SELECT
+            bp.id,
+            p.id AS postId,
+            p.title,
+            s.name AS sectionName,
+            bp.ban_reason AS banReason,
+            bp.created_at AS createdAt
+        FROM banned_posts bp
+                 INNER JOIN posts p ON bp.post_id = p.id
+                 INNER JOIN sections s ON bp.section_id = s.id
+        WHERE bp.section_id = #{sectionId}
+        ORDER BY bp.created_at DESC
+    </select>
+
 </mapper>

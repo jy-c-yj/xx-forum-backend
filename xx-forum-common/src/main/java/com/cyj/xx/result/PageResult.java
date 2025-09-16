@@ -21,4 +21,6 @@ public class PageResult implements Serializable {
 
     private List records; //当前页数据集合
 
+    private Integer sectionId;
+
 }

@@ -15,4 +15,5 @@ public class NewReplyDTO {
     private String content;
     private Long postId;
     private Long parentId = null;
+    private Long sectionId;
 }

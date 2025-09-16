@@ -120,7 +120,7 @@ public class myInformationController {
         return myInformationServiceImpl.getMyCollection(userId ,pageNum,pageSize);
     }
 
-    @GetMapping("/mySections")
+    @GetMapping("/manageSections")
     public Result<List<MySectionsDVO>> mySection() {
         Long userId = BaseContext.getCurrentId();
         return myInformationServiceImpl.getMySections(userId);
@@ -129,6 +129,12 @@ public class myInformationController {
     public Result<ManageShowSectionDVO> manageSection(Long sectionId) {
         Long userId = BaseContext.getCurrentId();
         return Result.success(sectionsServiceImpl.getSection(sectionId,userId)) ;
+    }
+
+    @GetMapping("/manageSections/OperationLog")
+    public Result<List<OperationLogDVO>> OperationLog(Long sectionId) {
+        Long userId = BaseContext.getCurrentId();
+        return myInformationServiceImpl.OperationLog(userId,sectionId);
     }
 
 }

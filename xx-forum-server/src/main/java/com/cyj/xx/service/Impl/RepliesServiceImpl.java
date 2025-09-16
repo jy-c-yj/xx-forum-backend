@@ -7,6 +7,7 @@ import com.cyj.xx.dto.RepliesPageDTO;
 import com.cyj.xx.dto.UpdataReplyLikeDTO;
 import com.cyj.xx.dvo.ReplyDVO;
 import com.cyj.xx.entity.*;
+import com.cyj.xx.exception.UserBannedException;
 import com.cyj.xx.mapper.*;
 import com.cyj.xx.result.PageResult;
 import com.cyj.xx.result.Result;
@@ -48,6 +49,9 @@ public class RepliesServiceImpl implements repliesService {
     @Autowired
     private SimpMessagingTemplate brokerMessagingTemplate;
 
+    @Autowired
+    private BannedUserMapper bannedUserMapper;
+
     @Override
     public PageResult getReply(RepliesPageDTO repliesPageDTO) {
         Long id = Long.parseLong("-1");
@@ -57,6 +61,9 @@ public class RepliesServiceImpl implements repliesService {
         String key1_3 = "replies:PostId:"+repliesPageDTO.getPostid()+":page:Reverse:"+repliesPageDTO.getPage();
         String key2 = "replies:PostId:"+repliesPageDTO.getPostid()+":replyId:";
         try{
+            //查询回复所属板块
+
+            Posts p = postsMapper.getPostById(Long.parseLong(Integer.valueOf(repliesPageDTO.getPostid()).toString()));
             //如果缓存存在
             if(type == 1){//热门查询
                 if(redisUtil.exists(key1)){
@@ -65,6 +72,7 @@ public class RepliesServiceImpl implements repliesService {
                     PageResult pageResult = PageResult.builder()
                             .total(replies.size())
                             .records(replies)
+                            .sectionId(p.getSectionId())
                             .build();
                     log.info("检查点赞数据是否以被缓存");
                     if(!redisUtil.exists("likes:isLikes")){
@@ -86,6 +94,7 @@ public class RepliesServiceImpl implements repliesService {
                     PageResult pageResult = PageResult.builder()
                             .total(replies.size())
                             .records(replies)
+                            .sectionId(p.getSectionId())
                             .build();
                     log.info("检查点赞数据是否以被缓存");
                     if(!redisUtil.exists("likes:isLikes")){
@@ -107,6 +116,7 @@ public class RepliesServiceImpl implements repliesService {
                     PageResult pageResult = PageResult.builder()
                             .total(replies.size())
                             .records(replies)
+                            .sectionId(p.getSectionId())
                             .build();
                     log.info("检查点赞数据是否以被缓存");
                     if(!redisUtil.exists("likes:isLikes")){
@@ -204,6 +214,11 @@ public class RepliesServiceImpl implements repliesService {
     public Result addNewReply(NewReplyDTO newReplyDTO) {
         String key = "replies:postId:"+newReplyDTO.getPostId()+":replyId:";
 
+        BannedUser bannedUser = bannedUserMapper.isBanned(BaseContext.getCurrentId(),newReplyDTO.getSectionId());
+        if(bannedUser != null){
+            throw new UserBannedException();
+        }
+
         if(newReplyDTO.getContent() == null || newReplyDTO.getContent().equals("")){
             log.info("newReply: {}",newReplyDTO);
             return Result.error("内容不能为空");
@@ -277,10 +292,10 @@ public class RepliesServiceImpl implements repliesService {
             }
             return Result.success(replyDVO);
         }catch (Exception e ){
-            e.printStackTrace();
+            return Result.error("回复失败");
         }
 
-        return Result.error("回复失败");
+
     }
 
     /**

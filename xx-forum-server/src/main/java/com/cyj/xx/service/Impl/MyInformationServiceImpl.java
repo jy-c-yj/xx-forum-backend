@@ -44,6 +44,9 @@ public class MyInformationServiceImpl implements myInformationService {
     @Autowired
     RedisUtil redisUtil;
 
+    @Autowired
+    ModeratorOperationLogMapper moderatorOperationLogMapper;
+
 
 
 
@@ -279,6 +282,27 @@ public class MyInformationServiceImpl implements myInformationService {
             return Result.success(ldvo);
 
         }catch (Exception e) {
+            return Result.error("查询数据库失败");
+        }
+    }
+
+
+    /**
+     * 查询操作日志
+     * @param userId
+     * @param sectionId
+     * @return
+     */
+    @Override
+    public Result<List<OperationLogDVO>> OperationLog(Long userId, Long sectionId) {
+        log.info("开始查询日志（userId: {}, sectionId: {}）", userId, sectionId);
+        List<OperationLogDVO> ldvo = new ArrayList<>();
+        try{
+            ldvo = moderatorOperationLogMapper.SelectBySectionId(sectionId);
+
+            return Result.success(ldvo);
+        }catch (Exception e) {
+            log.error("查询日志失败（userId: {}, sectionId: {}）", userId, sectionId);
             return Result.error("查询数据库失败");
         }
     }

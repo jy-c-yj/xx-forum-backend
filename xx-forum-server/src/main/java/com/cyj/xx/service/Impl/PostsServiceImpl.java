@@ -9,6 +9,7 @@ import com.cyj.xx.dto.PostsPageDTO;
 import com.cyj.xx.dto.SecPostsPageDTO;
 import com.cyj.xx.dvo.*;
 import com.cyj.xx.entity.*;
+import com.cyj.xx.exception.UserBannedException;
 import com.cyj.xx.mapper.*;
 import com.cyj.xx.result.PageResult;
 import com.cyj.xx.result.Result;
@@ -50,6 +51,8 @@ public class PostsServiceImpl implements postsService {
 
     @Autowired
     BannedPostMapper bannedPostMapper;
+    @Autowired
+    private BannedUserMapper bannedUserMapper;
 
     /**
      * 分页查询热门帖子
@@ -532,7 +535,15 @@ public class PostsServiceImpl implements postsService {
         if(BaseContext.getCurrentId() == null){
             return Result.error("登陆已过期");
         }
+        BannedUser bannedUser = bannedUserMapper.isBanned(BaseContext.getCurrentId(),Long.parseLong(postPushDTO.getSectionId().toString()));
+        if(bannedUser != null){
+            throw new UserBannedException();
+        }
+
+
         try{
+            //
+
             Posts posts = Posts.builder()
                     .title(postPushDTO.getTitle())
                     .content(postPushDTO.getContent())
@@ -665,6 +676,108 @@ public class PostsServiceImpl implements postsService {
         }catch (Exception e){
             return Result.error("封禁失败（数据库出错）");
         }
+    }
 
+
+    /**
+     * 帖子置顶
+     * @param userId
+     * @param postId
+     * @return
+     */
+    @Override
+    public Result<Boolean> pinPost(Long userId, Long postId) {
+        log.info("/**********************************************/\n" +
+                "》》帖子置顶《《\n" +
+                "操作用户:{}\n目标帖子:{}\n" +
+                "/**********************************************/");
+        ModeratorOperationLog moderatorOperationLog = new ModeratorOperationLog();
+        try {
+            Posts posts = postsMapper.getPostById(postId);
+            //修改帖子状态
+            posts.setIsTop(true);
+            postsMapper.UpdataPost(posts);
+            //记录操作日志
+            moderatorOperationLog.setOperationType(OperationType.PIN);
+            moderatorOperationLog.setTargetType(TargetType.POST);
+            moderatorOperationLog.setModeratorId(userId);
+            moderatorOperationLog.setTargetId(postId);
+            moderatorOperationLog.setSectionId(Long.parseLong(posts.getSectionId().toString()) );
+            moderatorOperationLog.setReason("置顶操作");
+            moderatorOperationLogMapper.insert(moderatorOperationLog);
+            return Result.success(true);
+        }catch (Exception e){
+            log.error("帖子置顶失败");
+            return Result.error(e.getMessage());
+        }
+    }
+
+    /**
+     * 取消置顶
+     * @param userId
+     * @param postId
+     * @return
+     */
+    @Override
+    public Result<Boolean> unpinPost(Long userId, Long postId) {
+        log.info("/**********************************************/\n" +
+                "》》取消置顶《《\n" +
+                "操作用户:{}\n目标帖子:{}\n" +
+                "/**********************************************/");
+        ModeratorOperationLog moderatorOperationLog = new ModeratorOperationLog();
+        try {
+            Posts posts = postsMapper.getPostById(postId);
+            //修改帖子状态
+            posts.setIsTop(false);
+            postsMapper.UpdataPost(posts);
+            //记录操作日志
+            moderatorOperationLog.setOperationType(OperationType.UNPIN);
+            moderatorOperationLog.setTargetType(TargetType.POST);
+            moderatorOperationLog.setModeratorId(userId);
+            moderatorOperationLog.setTargetId(postId);
+            moderatorOperationLog.setSectionId(Long.parseLong(posts.getSectionId().toString()) );
+            moderatorOperationLog.setReason("取消操作");
+            moderatorOperationLogMapper.insert(moderatorOperationLog);
+            return Result.success(true);
+        }catch (Exception e){
+            log.error("取消置顶失败");
+            return Result.error(e.getMessage());
+        }
+    }
+
+    @Override
+    public Result<List<BanPostLogDVO>> getBanPostLog(Long sectionId) {
+        try{
+
+            List<BanPostLogDVO> ll = bannedPostMapper.selectBanPostLog(sectionId);
+            return Result.success(ll);
+
+        }catch (Exception e){
+            return Result.error(e.getMessage());
+        }
+    }
+
+    @Override
+    public Result<Boolean> unBanPost(Long id) {
+        try{
+
+            BannedPost bannedPost= bannedPostMapper.getById(id);
+            bannedPostMapper.deleteById(id);
+
+            //记录操作日志
+            ModeratorOperationLog moderatorOperationLog = new ModeratorOperationLog();
+            moderatorOperationLog.setOperationType(OperationType.UNBAN);
+            moderatorOperationLog.setTargetType(TargetType.POST);
+            moderatorOperationLog.setReason(bannedPost.getBanReason());
+            moderatorOperationLog.setCreatedAt(LocalDateTime.now());
+            moderatorOperationLog.setSectionId(bannedPost.getSectionId());
+            moderatorOperationLog.setTargetId(bannedPost.getPostId());
+            moderatorOperationLog.setModeratorId(BaseContext.getCurrentId());
+            moderatorOperationLogMapper.insert(moderatorOperationLog);
+            return Result.success();
+
+        }catch (Exception e){
+            return Result.error(e.getMessage());
+        }
     }
 }

@@ -3,6 +3,7 @@ package com.cyj.xx.service;
 import com.cyj.xx.dto.ConfirmBanUserDTO;
 import com.cyj.xx.dto.CreateSectionDTO;
 import com.cyj.xx.dto.UpdataSectionDTO;
+import com.cyj.xx.dvo.BanUserLogDVO;
 import com.cyj.xx.dvo.HotSectionsDVO;
 import com.cyj.xx.dvo.ManageShowSectionDVO;
 import com.cyj.xx.dvo.MyFollowSectionDVO;
@@ -38,4 +39,8 @@ public interface SectionsService {
     Result<Boolean> isModerator(Long sectionId, Long userId);
 
     Result<Boolean> confirmBanUser(ConfirmBanUserDTO confirmBanUserDTO);
+
+    Result<List<BanUserLogDVO>> GetBanUserLog(Long sectionId);
+
+    Result<Boolean> unBanUser(Long id);
 }

@@ -1,7 +1,9 @@
 package com.cyj.xx.controller.user;
 
 
+import com.cyj.xx.context.BaseContext;
 import com.cyj.xx.dto.*;
+import com.cyj.xx.dvo.BanPostLogDVO;
 import com.cyj.xx.dvo.PostDetailDVO;
 import com.cyj.xx.dvo.ReplyDVO;
 import com.cyj.xx.entity.Posts;
@@ -12,6 +14,8 @@ import com.cyj.xx.service.Impl.RepliesServiceImpl;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequestMapping("/user")
@@ -192,11 +196,50 @@ public class PostsController {
 
     }
 
+    /**
+     * 封禁帖子
+     */
+
     @PostMapping("/post/confirmBanPost")
     public Result<Boolean> confirmBanPost(@RequestBody ConfirmBanPostDTO confirmBanPostDTO) {
 
         return postsService.confirmBanPost(confirmBanPostDTO);
     }
 
+    /**
+     * 置顶帖子
+     */
+
+    @PutMapping("/post/pinPost/{postId}")
+    public Result<Boolean> pinPost(@PathVariable Long postId){
+            Long userId = BaseContext.getCurrentId();
+        return postsService.pinPost(userId,postId);
+    }
+
+
+    /**
+     * 取消置顶
+     */
+
+    @PutMapping("/post/unpinPost/{postId}")
+    public Result<Boolean> unpinPost(@PathVariable Long postId){
+        Long userId = BaseContext.getCurrentId();
+        return postsService.unpinPost(userId,postId);
+    }
+
+    @GetMapping("/post/banPostLog")
+    public Result<List<BanPostLogDVO>> banPostLog(Long sectionId) {
+        return postsService.getBanPostLog(sectionId);
+    }
+
+    /**
+     * 解封
+     * @param id
+     * @return
+     */
+    @PutMapping("/post/unBanPost/{id}")
+    public Result<Boolean> unBanUser(@PathVariable Long id){
+        return postsService.unBanPost(id);
+    }
 
 }

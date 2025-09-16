@@ -6,6 +6,7 @@ import com.cyj.xx.dto.ConfirmBanPostDTO;
 import com.cyj.xx.dto.ConfirmBanUserDTO;
 import com.cyj.xx.dto.CreateSectionDTO;
 import com.cyj.xx.dto.UpdataSectionDTO;
+import com.cyj.xx.dvo.BanUserLogDVO;
 import com.cyj.xx.dvo.HotSectionsDVO;
 import com.cyj.xx.dvo.MyFollowSectionDVO;
 import com.cyj.xx.entity.Section;
@@ -120,12 +121,39 @@ public class SectionsController {
         return sectionsService.isModerator(sectionId,userId);
     }
 
+    /**
+     * 封禁用户
+     * @param confirmBanUserDTO
+     * @return
+     */
+
     @PostMapping("/confirmBanUser")
     public Result<Boolean> confirmBanUser(@RequestBody ConfirmBanUserDTO confirmBanUserDTO) {
 
         return sectionsService.confirmBanUser(confirmBanUserDTO);
     }
 
+    /**
+     * 获取封禁信息
+     * @param sectionId
+     * @return
+     */
+
+    @GetMapping("/banUserLog")
+    public Result<List<BanUserLogDVO>> banUserLog(Long sectionId) {
+        return sectionsService.GetBanUserLog(sectionId);
+    }
+
+
+    /**
+     * 解封
+     * @param id
+     * @return
+     */
+    @PutMapping("/UnBanUser/{id}")
+    public Result<Boolean> unBanUser(@PathVariable Long id){
+        return sectionsService.unBanUser(id);
+    }
 
 
 }

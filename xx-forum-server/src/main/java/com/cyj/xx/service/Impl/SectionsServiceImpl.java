@@ -6,10 +6,7 @@ import com.cyj.xx.context.BaseContext;
 import com.cyj.xx.dto.ConfirmBanUserDTO;
 import com.cyj.xx.dto.CreateSectionDTO;
 import com.cyj.xx.dto.UpdataSectionDTO;
-import com.cyj.xx.dvo.HotSectionsDVO;
-import com.cyj.xx.dvo.ManageShowSectionDVO;
-import com.cyj.xx.dvo.MyFollowSectionDVO;
-import com.cyj.xx.dvo.SearchSectionDVO;
+import com.cyj.xx.dvo.*;
 import com.cyj.xx.entity.*;
 import com.cyj.xx.mapper.*;
 import com.cyj.xx.result.PageResult;
@@ -370,6 +367,43 @@ public class SectionsServiceImpl implements SectionsService {
             return Result.success(true);
         }catch (Exception e){
             return Result.error("封禁失败（数据库出错）");
+        }
+    }
+
+    @Override
+    public Result<List<BanUserLogDVO>> GetBanUserLog(Long sectionId) {
+        try{
+            List<BanUserLogDVO> list = bannedUserMapper.selectBanUserLog(sectionId);
+
+            return Result.success(list);
+
+        }catch (Exception e){
+            return Result.error(e.getMessage());
+        }
+    }
+
+    @Override
+    @Transactional
+    public Result<Boolean> unBanUser(Long id) {
+        try{
+
+            BannedUser bannedUser= bannedUserMapper.getById(id);
+            bannedUserMapper.deleteById(id);
+
+            //记录操作日志
+            ModeratorOperationLog moderatorOperationLog = new ModeratorOperationLog();
+            moderatorOperationLog.setOperationType(OperationType.UNBAN);
+            moderatorOperationLog.setTargetType(TargetType.USER);
+            moderatorOperationLog.setReason(bannedUser.getBanReason());
+            moderatorOperationLog.setCreatedAt(LocalDateTime.now());
+            moderatorOperationLog.setSectionId(bannedUser.getSectionId());
+            moderatorOperationLog.setTargetId(bannedUser.getUserId());
+            moderatorOperationLog.setModeratorId(BaseContext.getCurrentId());
+            moderatorOperationLogMapper.insert(moderatorOperationLog);
+            return Result.success();
+
+        }catch (Exception e){
+            return Result.error(e.getMessage());
         }
     }
 }

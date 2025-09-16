@@ -7,4 +7,18 @@
         values (#{userId}, #{sectionId}, #{banReason})
     </insert>
 
+    <select id="selectBanUserLog" resultType="com.cyj.xx.dvo.BanUserLogDVO">
+        SELECT
+            bu.id,
+            u.username AS userName,
+            s.name AS sectionName,
+            bu.ban_reason AS banReason,
+            bu.created_at AS createdAt
+        FROM banned_users bu
+                 INNER JOIN users u ON bu.user_id = u.id
+                 INNER JOIN sections s ON bu.section_id = s.id
+        WHERE bu.section_id = #{sectionId}
+        ORDER BY bu.created_at DESC
+    </select>
+
 </mapper>

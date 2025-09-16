@@ -57,7 +57,7 @@ mybatis:
 
 logging:
   level:
-    com.cyj.xx.mapper: trace  # 改为 TRACE 级别
+    com.cyj.xx.mapper: trace
     java.sql: debug
     org.springframework.messaging.simp: TRACE
     org.springframework.web.socket: TRACE
@@ -68,7 +68,7 @@ logging:
 cyj:
   jwt:
     secret: "jycyj"
-    exptime: 7200000
+    exptime: 72000000
     token: "token"
 
 

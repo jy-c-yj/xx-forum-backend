@@ -1,6 +1,10 @@
 package com.cyj.xx.exception;
 
-public class UserNotLoginException extends BaseException {
+
+/**
+ * 用户未登陆异常
+ */
+public class UserNotLoginException extends RuntimeException {
 
     public UserNotLoginException() {
     }

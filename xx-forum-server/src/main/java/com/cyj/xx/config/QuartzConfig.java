@@ -20,7 +20,7 @@ public class QuartzConfig {
 
     @Bean
     public Trigger UserSignInJobTrigger() {
-        CronScheduleBuilder cronScheduleBuilder = CronScheduleBuilder.cronSchedule("0 59 23 * * ?");//秒，分，时，日，月，周，年
+        CronScheduleBuilder cronScheduleBuilder = CronScheduleBuilder.cronSchedule("0 59 23 * * ?");//秒，分，时，日，月，周，年"0 59 23 * * ?"
         return TriggerBuilder.newTrigger()
                 .forJob(UserSignInJobDetail())
                 .withIdentity("UserSignInTask")

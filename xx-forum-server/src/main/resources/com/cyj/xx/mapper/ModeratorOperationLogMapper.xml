@@ -7,4 +7,41 @@
         values (#{moderatorId},#{operationType},#{targetType},#{targetId},#{sectionId},#{reason})
     </insert>
 
+    <select id="SelectBySectionId" resultType="com.cyj.xx.dvo.OperationLogDVO">
+        SELECT
+            mol.id,
+            -- 操作类型转换：将枚举值转换为中文描述
+            CASE mol.operation_type
+                WHEN 'ban' THEN '封禁'
+                WHEN 'unban' THEN '解封'
+                WHEN 'pin' THEN '置顶'
+                WHEN 'unpin' THEN '取消置顶'
+                END AS operationType,
+            -- 目标类型转换：将枚举值转换为中文描述
+            CASE mol.target_type
+                WHEN 'post' THEN '帖子'
+                WHEN 'user' THEN '用户'
+                END AS targetType,
+            -- 根据目标类型获取操作目标：帖子标题或用户名
+            CASE
+                WHEN mol.target_type = 'post' THEN p.title
+                WHEN mol.target_type = 'user' THEN u.username
+                END AS operationTarget,
+            -- 获取板块名称
+            s.name AS sectionName,
+            -- 操作原因
+            mol.reason,
+            -- 操作时间
+            mol.created_at AS createdAt
+        FROM moderator_operation_logs mol
+                 -- 关联板块表获取板块名称
+                 LEFT JOIN sections s ON mol.section_id = s.id
+            -- 左连接帖子表（仅当目标类型为帖子时使用）
+                 LEFT JOIN posts p ON mol.target_type = 'post' AND mol.target_id = p.id
+            -- 左连接用户表（仅当目标类型为用户时使用）
+                 LEFT JOIN users u ON mol.target_type = 'user' AND mol.target_id = u.id
+        WHERE mol.section_id = #{sectionId}
+        ORDER BY mol.created_at DESC
+    </select>
+
 </mapper>

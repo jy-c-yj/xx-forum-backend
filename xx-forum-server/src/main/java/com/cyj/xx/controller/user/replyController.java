@@ -48,6 +48,12 @@ public class replyController {
         return Result.success(pageResult);
     }
 
+
+    /**
+     * 新增回复
+     * @param newReplyDTO
+     * @return
+     */
     @PostMapping("/newReply")
     public Result newReply(@RequestBody NewReplyDTO newReplyDTO) {
 
@@ -72,7 +78,6 @@ public class replyController {
 
         String k = "user_Session:"+in.getReceiverId();
         Long iid = in.getId();
-        System.out.println("11111111111111111111111111111111111111111111========"+iid);
 
         if(redisUtil.exists(k)){
             NotificationDTO notificationDTO = interactionNotificationsMapper.getSystemNotificationsById(iid);

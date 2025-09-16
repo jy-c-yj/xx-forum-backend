@@ -23,4 +23,6 @@ public interface myInformationService {
     Result<PageResult> getMyCollection(Long userId, int pageNum, int pageSize);
 
     Result<List<MySectionsDVO>> getMySections(Long userId);
+
+    Result<List<OperationLogDVO>> OperationLog(Long userId, Long sectionId);
 }
