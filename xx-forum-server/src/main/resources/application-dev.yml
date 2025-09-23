@@ -4,6 +4,7 @@ cyj:
     host: localhost
     port: 3306
     database: xx_forum
+    database-quartz: xx_forum_quartz
     username: root
     password: 1234
 

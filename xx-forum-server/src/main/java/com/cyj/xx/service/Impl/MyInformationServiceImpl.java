@@ -178,6 +178,28 @@ public class MyInformationServiceImpl implements myInformationService {
                 Section sec = sectionsMapper.getSectionById(u.getSectionId());
                 mps.setSectionName(sec.getName());
                 mps.setXp(u.getExperience());
+                if(mps.getXp() <= 10){
+                    mps.setGrade(1);
+                } else if (mps.getXp() <= 20) {
+                    mps.setGrade(2);
+
+                } else if (mps.getXp() <= 30) {
+                    mps.setGrade(3);
+                } else if (mps.getXp() <= 40) {
+                    mps.setGrade(4);
+                } else if (mps.getXp() <= 50) {
+                    mps.setGrade(5);
+
+                }else if (mps.getXp() <= 60) {
+                    mps.setGrade(6);
+                } else if (mps.getXp() <= 70) {
+                    mps.setGrade(7);
+                } else if (mps.getXp() <= 80) {
+                    mps.setGrade(8);
+                } else if (mps.getXp() <= 90) {
+                    mps.setGrade(9);
+                }
+
                 ll.add(mps);
 
             }

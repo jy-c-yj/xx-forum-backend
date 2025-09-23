@@ -20,8 +20,9 @@ public class UserSignInJob extends QuartzJobBean {
 
     @Override
     protected void executeInternal(JobExecutionContext context) throws JobExecutionException {
-        log.info("更新签到状态-----{}", LocalDateTime.now().toString());
+        log.info("更新签到状态-----{}", LocalDateTime.now());
         userSignInService.BatchSignInStatus();
+
 
     }
 }

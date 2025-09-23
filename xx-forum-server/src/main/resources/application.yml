@@ -13,16 +13,38 @@ spring:
     time-zone: GMT+8
   type: com.alibaba.druid.pool.DruidDataSource
   datasource:
+    business:
       driver-class-name: ${cyj.datasource.driver-class-name}
       url: jdbc:mysql://${cyj.datasource.host}:${cyj.datasource.port}/${cyj.datasource.database}?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true
       username: ${cyj.datasource.username}
       password: ${cyj.datasource.password}
-      type: com.alibaba.druid.pool.DruidDataSource
+    quartz:
+      # Quartz 数据源配置
+      driver-class-name: ${cyj.datasource.driver-class-name}
+      url: jdbc:mysql://localhost:3306/xx_forum_quartz?serverTimezone=Asia/Shanghai&useUnicode=true&characterEncoding=utf-8&zeroDateTimeBehavior=convertToNull&useSSL=false&allowPublicKeyRetrieval=true
+      username: ${cyj.datasource.username}
+      password: ${cyj.datasource.password}
       druid:
         initial-size: 5
         min-idle: 5
         max-active: 20
         max-wait: 60000
+
+
+  # JPA配置
+  jpa:
+    hibernate:
+      ddl-auto: none
+    show-sql: true
+
+  quartz:
+    # Quartz配置
+    job-store-type: jdbc
+    jdbc:
+      initialize-schema: never
+
+
+
   data:
     redis:
       host: localhost
@@ -35,11 +57,6 @@ spring:
           max-idle: 8
           max-wait: -1ms
           max-active: 16
-
-
-
-
-
 
 mybatis:
   #mapper配置文件
@@ -62,7 +79,8 @@ logging:
     org.springframework.messaging.simp: TRACE
     org.springframework.web.socket: TRACE
     org.springframework.web.socket.handler: TRACE
-
+    org.springframework.boot.autoconfigure.quartz: DEBUG
+    org.quartz: info
 
 
 cyj:
