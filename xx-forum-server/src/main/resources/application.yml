@@ -86,7 +86,7 @@ logging:
 cyj:
   jwt:
     secret: "jycyj"
-    exptime: 72000000
+    exptime: 7200000000
     token: "token"
 
 

@@ -28,6 +28,7 @@ import org.springframework.util.DigestUtils;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -90,6 +91,7 @@ public class UserServiceImpl implements userService {
                 .desc(user.getDesc())
                 .gender(user.getGender())
                 .token(jwt)
+                .createTime(user.getCreatedTime())
                 .likeCount(user.getLikeCount())
                 .postCount(user.getPostCount())
                 .build();
@@ -112,6 +114,9 @@ public class UserServiceImpl implements userService {
             userMap.put("postCount", userdVO.getPostCount());
             redisUtil.hsave(key, userMap,1 ,TimeUnit.DAYS);
         }
+
+        //早先缓存的用户缺少注册时间，每次登录补写，保证个人页能正常显示注册时间
+        redisUtil.Hset(key,"createtime",userdVO.getCreateTime());
 
 
 
@@ -137,27 +142,33 @@ public class UserServiceImpl implements userService {
         }
         if(userenrollDTO!=null){
 
-            try {
-                //获取原始文件名
-                String s = userenrollDTO.getFile().getOriginalFilename();
-                log.info(s);
-                //截取文件后缀
-                String suffix = s.substring(s.lastIndexOf("."));
-                log.info(suffix);
-                //拼接文件名
-                String newFileName = UUID.randomUUID().toString()+suffix;
-                log.info(newFileName);
-                //上传
-                String url = AliOssUtil.Upload(userenrollDTO.getFile().getBytes(), newFileName);
-                log.info(url);
-                image = url;
+            //头像可选：未上传头像时使用默认头像，避免空指针导致注册失败
+            if(userenrollDTO.getFile() != null && !userenrollDTO.getFile().isEmpty()){
+                try {
+                    //获取原始文件名
+                    String s = userenrollDTO.getFile().getOriginalFilename();
+                    log.info(s);
+                    //截取文件后缀
+                    String suffix = s.substring(s.lastIndexOf("."));
+                    log.info(suffix);
+                    //拼接文件名
+                    String newFileName = UUID.randomUUID().toString()+suffix;
+                    log.info(newFileName);
+                    //上传
+                    String url = AliOssUtil.Upload(userenrollDTO.getFile().getBytes(), newFileName);
+                    log.info(url);
+                    image = url;
 
-            } catch (IOException e) {
+                } catch (IOException e) {
 
-                log.info("文件上传异常{}", e.getMessage());
+                    log.info("文件上传异常{}", e.getMessage());
 
-            } catch (Exception e) {
-                throw new RuntimeException(e);
+                } catch (Exception e) {
+                    throw new RuntimeException(e);
+                }
+            } else {
+                log.info("未上传头像，使用默认头像");
+                image = "default_avatar.png";
             }
 
             user = User.builder()
@@ -196,7 +207,7 @@ public class UserServiceImpl implements userService {
         MeanUser meanUser = new MeanUser();
         if (redisUtil.exists(key)) {
             Map<String,Object> map = redisUtil.hgetAll(key);
-            meanUser.setId(Long.parseLong(map.get("id").toString()));
+            meanUser.setId(id);
             meanUser.setUsername(map.get("username").toString());
             meanUser.setImage(map.get("file").toString());
             return meanUser;
@@ -228,8 +239,12 @@ public class UserServiceImpl implements userService {
 
             map = redisUtil.hgetAll("user:"+id);
             log.info("查询缓存 ==== 》{}",id);
+            Object cachedCreateTime = map.get("createtime");
             UserPersonalDVO userpersonalDVO = UserPersonalDVO.builder()
                     .id(id)
+                    .createtime(cachedCreateTime == null ? null
+                            : LocalDateTime.parse(cachedCreateTime.toString(),
+                                    DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss")))
                     .username(map.get("username").toString())
                     .image(map.get("file").toString())
                     .phone(map.get("phone").toString())

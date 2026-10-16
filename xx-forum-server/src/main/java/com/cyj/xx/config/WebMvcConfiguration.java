@@ -4,6 +4,7 @@ import com.cyj.xx.interceptor.LoginCheckInterceptor;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.InterceptorRegistry;
@@ -18,6 +19,16 @@ public class WebMvcConfiguration extends WebMvcConfigurationSupport {
     @Autowired
     private LoginCheckInterceptor loginCheckInterceptor;
 
+
+    @Bean
+    public WebMvcConfigurer corsConfigurer() {
+        return new WebMvcConfigurer() {
+            @Override
+            public void addCorsMappings(CorsRegistry registry) {
+                registry.addMapping("/**").allowedOrigins("*");
+            }
+        };
+    }
 
 
     protected void addInterceptors(InterceptorRegistry registry){

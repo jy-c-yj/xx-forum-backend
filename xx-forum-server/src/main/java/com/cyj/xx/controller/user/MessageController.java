@@ -26,9 +26,6 @@ import java.util.Map;
 public class MessageController {
 
     @Autowired
-    private SimpMessageSendingOperations messagingTemplate;
-
-    @Autowired
     private  SimpMessagingTemplate brokerMessagingTemplate;
 
     @Autowired
@@ -37,10 +34,20 @@ public class MessageController {
     @Autowired
     private PrivateMessageService privateMessageService;
 
+
+    /**
+     * STOMP 控制器
+     * 客户端发 SEND destination=/app/private-message命中此控制器
+     * @param message
+     * @param principal
+     */
     @MessageMapping("/private-message")
     public void sendPrivateMessage(
             @Payload Message message,
+            //token(JWT) → 握手拦截器校验 →
+            // attributes["USER_ID"] → UserIdPrincipal → Principal 参数
             Principal principal
+
     ) {
         if (principal instanceof UserIdPrincipal) {
             UserIdPrincipal userPrincipal = (UserIdPrincipal) principal;
@@ -60,7 +67,7 @@ public class MessageController {
 
             privateMessageService.addMessage(privateMessage);
             //判断接收方是否在线
-            String key = "user_Session:"+userPrincipal.getName();
+            String key = "user_Session:"+message.getTo();
             if(redisUtil.exists(key)){
                 System.out.println("Sending to user: " + message.getTo());
                 brokerMessagingTemplate.convertAndSendToUser(
@@ -71,7 +78,4 @@ public class MessageController {
             }
         }
     }
-
-
-
 }

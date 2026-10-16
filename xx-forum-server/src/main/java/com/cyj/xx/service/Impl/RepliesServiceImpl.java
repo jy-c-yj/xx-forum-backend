@@ -268,10 +268,14 @@ public class RepliesServiceImpl implements repliesService {
             interactionNotification.setSenderId(Integer.parseInt(BaseContext.getCurrentId().toString()) );
             interactionNotification.setPostId(post.getId());
 
-            if(newReplyDTO.getParentId().intValue() != 0){
+            //parentId未传视为回复主贴，此处做空值保护，避免回复已入库却抛异常返回失败
+            if(newReplyDTO.getParentId() != null && newReplyDTO.getParentId() != 0){
                 interactionNotification.setType(InteractionNotification.NotificationType.COMMENT_REPLY.getCode());
                 interactionNotification.setReplyId(replies.getId());
-                Long ReceiverId =  repliesMapper.getRepliesById(newReplyDTO.getParentId() ).getUserId();
+                Replies parentReply = repliesMapper.getRepliesById(newReplyDTO.getParentId());
+                Long ReceiverId = parentReply != null
+                        ? parentReply.getUserId()
+                        : postsMapper.getPostById(newReplyDTO.getPostId()).getUserId();
                 interactionNotification.setReceiverId(Integer.parseInt(ReceiverId.toString()));
 
             }else {

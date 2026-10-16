@@ -94,6 +94,10 @@ public class PostsServiceImpl implements postsService {
     @Override
 
     public PageResult Secpage(SecPostsPageDTO secPostsPageDTO) {
+        //sortType未传时默认为按时间排序，避免下面拆箱空指针
+        if(secPostsPageDTO.getSortType() == null){
+            secPostsPageDTO.setSortType(1);
+        }
         String key1_t = "Posts:Sec:"+secPostsPageDTO.getSectionId()+":page_t:"+secPostsPageDTO.getPage();//时间排序
         String key1_v = "Posts:Sec:"+secPostsPageDTO.getSectionId()+":page_v:"+secPostsPageDTO.getPage();//热度/观看数排序
         String key2 = "Posts:Sec:"+secPostsPageDTO.getSectionId()+":postId:";
@@ -278,6 +282,11 @@ public class PostsServiceImpl implements postsService {
         Long userId = BaseContext.getCurrentId();
         String key = "likes:post:"+postId+":user:"+userId;
         try{
+            //已点赞则直接返回成功，避免重复插入触发唯一键冲突
+            if(userPostLikesMapper.getlike(postId,userId) != null){
+                log.info("用户{}已点赞帖子{}，跳过重复点赞",userId,postId);
+                return Result.success(true);
+            }
             //更新帖子点赞表
             userPostLikesMapper.insert(userId,postId);
             //更新帖子点赞数

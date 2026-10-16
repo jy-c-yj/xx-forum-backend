@@ -20,16 +20,10 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
     @Autowired
     private WebSocketHandshakeInterceptor webSocketHandshakeInterceptor;
 
-    @Bean
-    public WebMvcConfigurer corsConfigurer() {
-        return new WebMvcConfigurer() {
-            @Override
-            public void addCorsMappings(CorsRegistry registry) {
-                registry.addMapping("/**").allowedOrigins("*");
-            }
-        };
-    }
 
+    /**
+     * 端点注册
+     */
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
 

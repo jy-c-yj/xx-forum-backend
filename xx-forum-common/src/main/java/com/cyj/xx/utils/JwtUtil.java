@@ -16,11 +16,10 @@ public class JwtUtil {
         Date exp = new Date(System.currentTimeMillis() + time);
 
 
-
-
         //生成JWT
         JwtBuilder jwtBuilder = Jwts.builder()
                 .signWith(SignatureAlgorithm.HS256,key.getBytes(StandardCharsets.UTF_8))
+
                 .setClaims(map)
 
                 .setExpiration(exp);
