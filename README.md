@@ -1,7 +1,7 @@
 # xx-forum 后端
 
 一个基于 Spring Boot 3 的论坛（社区）后端服务，支持板块、帖子、回复、私信、签到与版主管理等完整社区功能。
-
+前端[xx-forum-front](https://github.com/jy-c-yj/xx-forum-front)
 ## 技术栈
 
 | 组件 | 版本 / 说明 |
